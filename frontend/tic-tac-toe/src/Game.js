@@ -1,6 +1,7 @@
 import React from 'react';
 import Square from './Square';
 import './styles.css'; // Import CSS file
+import io from 'socket.io-client';
 import { calculateWinner } from './utils';
 
 class Game extends React.Component {
@@ -12,6 +13,28 @@ class Game extends React.Component {
         winner: null, // Indicates the winner (X, O, or null)
       };
     }
+
+    // Initialize Socket.io connection
+    this.socket = io('http://localhost:5000'); // Replace with your Socket.io server URL
+}
+
+    componentDidMount() {
+        // Add event listeners to handle incoming messages from the server
+        this.socket.on('connect', () => {
+          console.log('Connected to server');
+        });
+  
+        this.socket.on('disconnect', () => {
+          console.log('Disconnected from server');
+        });
+  
+        // Example: Add more event listeners as needed
+      }
+  
+      componentWillUnmount() {
+        // Clean up Socket.io connection when component unmounts
+        this.socket.disconnect();
+      }
 
   // Function to handle square click
   handleSquareClick = (index) => {
