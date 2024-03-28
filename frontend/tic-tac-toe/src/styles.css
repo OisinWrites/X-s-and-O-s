@@ -1,0 +1,27 @@
+/* styles.css */
+
+/* Game Board */
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    margin-bottom: 20px;
+  }
+  
+  /* Square */
+  .square {
+    font-size: 3em;
+    border: 1px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  /* Game Status */
+  .status {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+  }
+  

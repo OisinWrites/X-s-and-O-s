@@ -1,4 +1,6 @@
 import React from 'react';
+import Square from './Square';
+import './styles.css'; // Import CSS file
 import { calculateWinner } from './utils';
 
 class Game extends React.Component {
@@ -26,11 +28,49 @@ class Game extends React.Component {
     }
   };
 
+  renderSquare(index) {
+    return (
+      <Square
+        value={this.state.board[index]}
+        onClick={() => this.handleSquareClick(index)}
+      />
+    );
+  }
+
+renderGameStatus() {
+    const { currentPlayer, winner } = this.state;
+    if (winner) {
+      return `Winner: ${winner}`;
+    } else if (this.state.board.every((cell) => cell !== null)) {
+      return 'Draw!';
+    } else {
+      return `Next player: ${currentPlayer}`;
+    }
+  }
+
   render() {
     return (
       <div className="game">
-        <GameBoard board={this.state.board} onSquareClick={this.handleSquareClick} />
-        <GameStatus currentPlayer={this.state.currentPlayer} winner={this.state.winner} />
+        <div className="game-board">
+          <div className="board-row">
+            {this.renderSquare(0)}
+            {this.renderSquare(1)}
+            {this.renderSquare(2)}
+          </div>
+          <div className="board-row">
+            {this.renderSquare(3)}
+            {this.renderSquare(4)}
+            {this.renderSquare(5)}
+          </div>
+          <div className="board-row">
+            {this.renderSquare(6)}
+            {this.renderSquare(7)}
+            {this.renderSquare(8)}
+          </div>
+        </div>
+        <div className="game-info">
+          <div>{this.renderGameStatus()}</div>
+        </div>
       </div>
     );
   }
