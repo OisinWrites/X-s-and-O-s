@@ -12,43 +12,57 @@ class Game extends React.Component {
         currentPlayer: 'X', // X starts the game
         winner: null, // Indicates the winner (X, O, or null)
       };
+
+      // Initialize Socket.io connection
+      this.socket = io('http://localhost:5000'); // Replace with your Socket.io server URL
     }
 
-    // Initialize Socket.io connection
-    this.socket = io('http://localhost:5000'); // Replace with your Socket.io server URL
-}
 
     componentDidMount() {
-        // Add event listeners to handle incoming messages from the server
-        this.socket.on('connect', () => {
-          console.log('Connected to server');
-        });
-  
-        this.socket.on('disconnect', () => {
-          console.log('Disconnected from server');
-        });
-  
-        // Example: Add more event listeners as needed
+        // Listen for move events from the server
+        this.socket.on('move', this.handleMoveFromServer);
+        console.log('Listening for move events from the server...');
       }
-  
-      componentWillUnmount() {
-        // Clean up Socket.io connection when component unmounts
-        this.socket.disconnect();
-      }
-
-  // Function to handle square click
-  handleSquareClick = (index) => {
-    // Check if the square is already filled or if there's a winner
-    if (!this.state.board[index] && !this.state.winner) {
-      const newBoard = [...this.state.board];
-      newBoard[index] = this.state.currentPlayer;
-      // Update the game board and check for winner
-      this.setState({
-        board: newBoard,
-        currentPlayer: this.state.currentPlayer === 'X' ? 'O' : 'X',
-        winner: calculateWinner(newBoard),
-      });
+    
+    componentWillUnmount() {
+        // Clean up event listeners when component unmounts
+        this.socket.off('move', this.handleMoveFromServer);
+        console.log('Removing move event listener...');
     }
+    
+    handleMoveFromServer = ({ index }) => {
+        // Update the game board state based on the move received from the server
+        const newBoard = [...this.state.board];
+        newBoard[index] = this.state.currentPlayer === 'X' ? 'O' : 'X';
+        this.setState({
+          board: newBoard,
+          currentPlayer: this.state.currentPlayer === 'X' ? 'O' : 'X',
+          winner: calculateWinner(newBoard),
+        });
+        console.log(`Received move from server: ${index}`);
+    };
+    
+    handleSquareClick = (index) => {
+        if (!this.state.board[index] && !this.state.winner) {
+          const newBoard = [...this.state.board];
+          newBoard[index] = this.state.currentPlayer;
+    
+          // Update the game board locally
+          this.setState({
+            board: newBoard,
+            currentPlayer: this.state.currentPlayer === 'X' ? 'O' : 'X',
+            winner: calculateWinner(newBoard),
+          });
+    
+          // Send the move to the server
+          this.sendMoveToServer(index);
+          console.log(`Sent move to server: ${index}`);
+        }
+    };
+
+  sendMoveToServer = (index) => {
+    // Emit an event to the server with the move information
+    this.socket.emit('move', { index });
   };
 
   renderSquare(index) {
