@@ -3,6 +3,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const cors = require('cors');
 
 // Create Express app
 const app = express();
@@ -10,6 +11,14 @@ const server = http.createServer(app);
 
 // Serve static files from the React app's build folder
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build')));
+
+// Enable CORS for all routes
+app.use(cors({
+  origin: 'http://localhost:3000', // Allow requests from frontend origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Allow the specified methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'], // Allow the specified headers
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+}));
 
 // Define route handler for the root URL
 app.get('/', (req, res) => {
@@ -102,4 +111,18 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000; // Use the specified port or default to 5000
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+// New code snippet for the API endpoint
+app.get('/api/data', (req, res) => {
+  // Your logic to fetch data from the database or any other source
+  // Replace the following dummy data with your actual data logic
+  const data = [
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' },
+    { id: 3, name: 'Item 3' }
+  ];
+  
+  // Send the data as JSON response
+  res.json(data);
 });

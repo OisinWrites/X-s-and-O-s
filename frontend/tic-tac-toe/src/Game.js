@@ -71,6 +71,20 @@ class Game extends Component {
   joinGame = (gameId) => {
     // Emit an event to the server to join an existing game
     this.socket.emit('joinGame', gameId);
+    
+    // Listen for game start event from the server
+    this.socket.on('gameStart', () => {
+      // Redirect the user to the game room once the game starts
+      this.setState({ gameId });
+    });
+  
+    // Listen for game error event from the server
+    this.socket.on('gameError', (errorMessage) => {
+      // Handle game-related errors (e.g., game not found, game already full)
+      console.error('Game Error:', errorMessage);
+      // Clear the game ID entered by the user
+      this.setState({ gameId: null });
+    });
   };
 
   render() {
@@ -81,6 +95,7 @@ class Game extends Component {
             <button className="button" onClick={this.createGame}>Create Game</button>
             <input type="text" placeholder="Enter Game ID" onChange={(e) => this.setState({ gameId: e.target.value })} />
             <button className="button" onClick={() => this.joinGame(this.state.gameId)}>Join Game</button>
+            <p>Hi Oisin</p>
           </div>
         ) : (
           <div>
