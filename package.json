@@ -1,5 +1,17 @@
 {
+  "name": "tic-tac-toe",
+  "version": "1.0.0",
+  "description": "Tic-Tac-Toe game app",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "build": "react-scripts build"
+  },
   "dependencies": {
-    "socket.io-client": "^4.7.5"
+    "express": "^4.19.2",
+    "react-scripts": "^5.0.1",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "@babel/plugin-proposal-private-property-in-object": "^7.16.0"
   }
 }

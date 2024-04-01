@@ -7,3 +7,5 @@ const GameStatus = ({ currentPlayer, winner }) => {
     }
     return <div className="status">{status}</div>;
 };
+
+export default GameStatus;

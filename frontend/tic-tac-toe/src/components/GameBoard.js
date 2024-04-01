@@ -1,3 +1,5 @@
+import Square from './Square';
+
 const GameBoard = ({ board, onSquareClick }) => {
     return (
       <div className="board">
@@ -7,3 +9,5 @@ const GameBoard = ({ board, onSquareClick }) => {
       </div>
     );
 };
+
+export default GameBoard;
