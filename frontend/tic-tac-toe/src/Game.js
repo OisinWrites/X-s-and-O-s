@@ -1,110 +1,117 @@
 import React, { Component } from 'react';
 import GameBoard from './components/GameBoard';
 import GameStatus from './components/GameStatus';
-import './styles.css'; // Import CSS file
+import './styles.css';
 import io from 'socket.io-client';
-import { calculateWinner } from './utils';
 
 class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      gameId: null, // Track the current game ID
-      board: Array(9).fill(null), // Represents the game board
-      currentPlayer: 'X', // X starts the game
-      winner: null, // Indicates the winner (X, O, or null)
+      gameId: null,
+      board: Array(9).fill(null),
+      currentPlayer: 'X',
+      winner: null,
+      joinGameId: '',
+      playerSymbol: null, // Initialized as null
+      isGameCreated: false,
+      isGameStarted: false,
     };
 
-    // Initialize Socket.io connection
-    this.socket = io('http://localhost:5000'); // Connect to the server
+    this.socket = io('http://localhost:5000');
+    this.setupSocketListeners();
+  }
 
-    // Bind event handlers
+  setupSocketListeners = () => {
     this.socket.on('gameStateUpdate', this.handleGameStateUpdate);
     this.socket.on('gameError', this.handleGameError);
-  }
+    this.socket.on('gameCreated', this.handleGameCreated);
+    this.socket.on('gameStart', this.handleGameStart);
+  };
 
   componentWillUnmount() {
-    // Clean up event listeners when component unmounts
-    this.socket.off('gameStateUpdate', this.handleGameStateUpdate);
-    this.socket.off('gameError', this.handleGameError);
+    this.socket.off('gameStateUpdate');
+    this.socket.off('gameError');
+    this.socket.off('gameCreated');
+    this.socket.off('gameStart');
   }
 
-  handleGameStateUpdate = ({ gameId, board, currentPlayer, winner }) => {
-    // Update the game state based on the data received from the server
-    this.setState({ gameId, board, currentPlayer, winner });
+  handleGameCreated = (gameId) => {
+    console.log('Game created with ID:', gameId);
+    this.setState({ gameId, isGameCreated: true });
+  };
+
+  handleGameStart = (data) => {
+    console.log('Game started:', data);
+    const playerSymbol = data.players[0] === this.socket.id ? 'X' : 'O';
+    // Ensure the gameId is updated in the state when the game starts
+    this.setState({
+      gameId: data.gameId, // Set the gameId from the gameStart event data
+      isGameStarted: true,
+      playerSymbol: playerSymbol,
+      isGameCreated: true, // Ensure the UI transitions for the player joining a game
+    }, () => {
+      console.log('Game state after starting:', this.state);
+    });
+  };
+
+  handleGameStateUpdate = (data) => {
+    console.log('Game state update:', data);
+    this.setState({
+      board: data.board,
+      currentPlayer: data.currentPlayer,
+      winner: data.winner,
+      // No need to set isGameStarted here if it's already handled in handleGameStart
+    });
   };
 
   handleGameError = (errorMessage) => {
-    // Handle game-related errors (e.g., game not found, game already full)
     console.error('Game Error:', errorMessage);
-    // Implement error handling as needed
   };
 
   handleSquareClick = (index) => {
-    // Handle square click event
-    if (!this.state.board[index] && !this.state.winner) {
-      const newBoard = [...this.state.board];
-      newBoard[index] = this.state.currentPlayer;
-
-      // Update the game board locally
-      this.setState({
-        board: newBoard,
-        currentPlayer: this.state.currentPlayer === 'X' ? 'O' : 'X',
-        winner: calculateWinner(newBoard),
-      });
-
-      // Send the move to the server
+    const { board, winner, isGameStarted, playerSymbol, currentPlayer } = this.state;
+    console.log(`Square clicked: ${index}, isGameStarted: ${isGameStarted}, currentPlayer: ${currentPlayer}, playerSymbol: ${playerSymbol}`);
+  
+    if (isGameStarted && !board[index] && !winner && playerSymbol === currentPlayer) {
+      console.log(`Valid move by ${playerSymbol} at index ${index}`);
       this.sendMoveToServer(index);
+    } else {
+      console.log(`Invalid move attempt: isGameStarted=${isGameStarted}, board[index]=${board[index]}, winner=${winner}, playerSymbol=${playerSymbol}, currentPlayer=${currentPlayer}`);
     }
   };
 
   sendMoveToServer = (index) => {
-    // Emit an event to the server with the move information and current gameId
     this.socket.emit('move', { gameId: this.state.gameId, index });
   };
 
   createGame = () => {
-    // Emit an event to the server to create a new game
     this.socket.emit('createGame');
   };
 
-  joinGame = (gameId) => {
-    // Emit an event to the server to join an existing game
-    this.socket.emit('joinGame', gameId);
-    
-    // Listen for game start event from the server
-    this.socket.on('gameStart', () => {
-      // Redirect the user to the game room once the game starts
-      this.setState({ gameId });
-    });
-  
-    // Listen for game error event from the server
-    this.socket.on('gameError', (errorMessage) => {
-      // Handle game-related errors (e.g., game not found, game already full)
-      console.error('Game Error:', errorMessage);
-      // Clear the game ID entered by the user
-      this.setState({ gameId: null });
-    });
+  joinGame = () => {
+    this.socket.emit('joinGame', this.state.joinGameId);
+  };
+
+  handleJoinGameInputChange = (event) => {
+    this.setState({ joinGameId: event.target.value });
   };
 
   render() {
+    const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted } = this.state;
     return (
       <div className="game">
-        {!this.state.gameId ? (
-          <div>
-            <button className="button" onClick={this.createGame}>Create Game</button>
-            <input type="text" placeholder="Enter Game ID" onChange={(e) => this.setState({ gameId: e.target.value })} />
-            <button className="button" onClick={() => this.joinGame(this.state.gameId)}>Join Game</button>
-            <p>Hi Oisin</p>
-          </div>
+        {isGameCreated && isGameStarted ? (
+          <>
+            <p>Game ID: {this.state.gameId}</p>
+            <GameBoard board={board} onSquareClick={this.handleSquareClick} />
+            <GameStatus currentPlayer={currentPlayer} winner={winner} />
+          </>
         ) : (
           <div>
-            <div className="game-board">
-              <GameBoard board={this.state.board} onSquareClick={this.handleSquareClick} />
-            </div>
-            <div className="game-info">
-              <GameStatus currentPlayer={this.state.currentPlayer} winner={this.state.winner} />
-            </div>
+            <button className="button" onClick={this.createGame}>Create Game</button>
+            <input type="text" placeholder="Enter Game ID" value={this.state.joinGameId} onChange={this.handleJoinGameInputChange} />
+            <button className="button" onClick={this.joinGame}>Join Game</button>
           </div>
         )}
       </div>
