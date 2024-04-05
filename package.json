@@ -7,11 +7,15 @@
     "start": "node backend/server.js",
     "build": "react-scripts build"
   },
+  "engines": {
+    "node": "20.x",
+    "npm": "8.x"
+  },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.16.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "react-scripts": "^3.0.1",
+    "react-scripts": "4.0.3",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5"
   }
