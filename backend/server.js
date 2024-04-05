@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 // Serve static files from the React app's build directory
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build')));
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe')));
 
 // Add a catch-all route to serve the index.html file for any unrecognized routes
 app.get('*', (req, res) => {
