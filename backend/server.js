@@ -13,11 +13,11 @@ server.listen(port, () => {
 });
 
 // Serve static files from the React app's build directory
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build')));
+app.use(express.static(path.join(__dirname, 'frontend', 'tic-tac-toe', 'build')));
 
 // Add a catch-all route to serve the index.html file for any unrecognized routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'tic-tac-toe'));
+  res.sendFile(path.join(__dirname, 'frontend', 'tic-tac-toe', 'build'));
 });
 
 const games = {};
@@ -121,3 +121,4 @@ io.on('connection', (socket) => {
   });
 });
 
+server.listen(5000, () => console.log(`Server running on port 5000`));
