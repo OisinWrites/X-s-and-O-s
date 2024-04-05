@@ -18,7 +18,7 @@ class Game extends Component {
       isGameStarted: false,
     };
 
-    this.socket = io('http://localhost:5000');
+    this.socket = io(window.location.origin);
     this.setupSocketListeners();
   }
 
