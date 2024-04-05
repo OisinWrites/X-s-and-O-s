@@ -7,6 +7,11 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+const port = process.env.PORT || 5000; // Use the PORT environment variable with a fallback
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
 // Serve static files from the React app's build directory
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build')));
 
