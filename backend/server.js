@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'bu
 
 // Add a catch-all route to serve the index.html file for any unrecognized routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build'));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'tic-tac-toe'));
 });
 
 const games = {};
