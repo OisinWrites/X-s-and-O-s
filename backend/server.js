@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 const port = process.env.PORT || 5000; // Use the PORT environment variable with a fallback
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
