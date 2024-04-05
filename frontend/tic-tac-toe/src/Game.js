@@ -38,8 +38,10 @@ class Game extends Component {
 
   handleGameCreated = (gameId) => {
     console.log('Game created with ID:', gameId);
-    this.setState({ gameId, isGameCreated: true });
-  };
+    this.setState({ gameId, isGameCreated: true }, () => {
+        console.log('New state:', this.state);
+    });
+};
 
   handleGameStart = (data) => {
     console.log('Game started:', data);
@@ -112,6 +114,7 @@ class Game extends Component {
             <button className="button" onClick={this.createGame}>Create Game</button>
             <input type="text" placeholder="Enter Game ID" value={this.state.joinGameId} onChange={this.handleJoinGameInputChange} />
             <button className="button" onClick={this.joinGame}>Join Game</button>
+            <p>Game ID: {this.state.gameId}</p>
           </div>
         )}
       </div>
