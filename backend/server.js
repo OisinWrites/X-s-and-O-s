@@ -15,11 +15,6 @@ server.listen(port, () => {
 // Serve static files from the React app's build directory
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build')));
 
-// Add a catch-all route to serve the index.html file for any unrecognized routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build'));
-});
-
 const games = {};
 
 function createGame(player1) {
@@ -125,4 +120,9 @@ io.on('connection', (socket) => {
       socket.emit('gameError', 'Invalid move or game state');
     }
   });
+});
+
+// Add a catch-all route to serve the index.html file for any unrecognized routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build'));
 });
