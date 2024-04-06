@@ -60,8 +60,14 @@ io.on('connection', (socket) => {
   socket.on('createGame', () => {
     const gameId = createGame(socket.id);
     socket.join(gameId);
-    socket.emit('gameCreated', gameId);
-    console.log(`Game ${gameId} created and user ${socket.id} joined`);
+  
+    // Check if the environment is development or production
+    const baseUrl = process.env.NODE_ENV === 'production' ? 'https://yourapp.heroku.com' : 'http://localhost:5000';
+    
+    const shareableLink = `${baseUrl}/game?gameId=${gameId}`;
+  
+    socket.emit('gameCreated', { gameId, shareableLink });
+    console.log(`Game ${gameId} created and user ${socket.id} joined with link: ${shareableLink}`);
   });
 
   socket.on('joinGame', (gameId) => {

@@ -29,6 +29,16 @@ class Game extends Component {
     this.socket.on('gameStart', this.handleGameStart);
   };
 
+  componentDidMount() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameId = urlParams.get('gameId');
+    if (gameId) {
+      this.setState({ joinGameId: gameId }, () => {
+        this.joinGame(); // Automatically attempt to join the game
+      });
+    }
+  }
+
   componentWillUnmount() {
     this.socket.off('gameStateUpdate');
     this.socket.off('gameError');
@@ -36,12 +46,28 @@ class Game extends Component {
     this.socket.off('gameStart');
   }
 
-  handleGameCreated = (gameId) => {
-    console.log('Game created with ID:', gameId);
-    this.setState({ gameId, isGameCreated: true }, () => {
-        console.log('New state:', this.state);
+  handleGameCreated = (data) => {
+    console.log('Game created with ID:', data.gameId);
+    this.setState({ gameId: data.gameId, shareableLink: data.shareableLink, isGameCreated: true }, () => {
+      this.shareGameLink();
     });
-};
+  };
+
+  shareGameLink = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Join My Game',
+        url: this.state.shareableLink,
+      }).then(() => {
+        console.log('Thanks for sharing!');
+      })
+      .catch(console.error);
+    } else {
+      // Fallback for browsers that do not support the Web Share API
+      // Show the link in a prompt or modal for the user to copy
+      alert(`Copy and share this link: ${this.state.shareableLink}`);
+    }
+  };
 
   handleGameStart = (data) => {
     console.log('Game started:', data);
@@ -111,7 +137,7 @@ class Game extends Component {
           </>
         ) : (
           <div>
-            <button className="button" onClick={this.createGame}>Create Game</button>
+            <button className="button" onClick={this.createGame}>Invite to Play</button>
             <input type="text" placeholder="Enter Game ID" value={this.state.joinGameId} onChange={this.handleJoinGameInputChange} />
             <button className="button" onClick={this.joinGame}>Join Game</button>
             <p>Game ID: {this.state.gameId}</p>
