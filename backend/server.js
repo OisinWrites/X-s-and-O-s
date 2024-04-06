@@ -62,7 +62,7 @@ io.on('connection', (socket) => {
     socket.join(gameId);
   
     // Check if the environment is development or production
-    const baseUrl = process.env.NODE_ENV === 'production' ? 'https://yourapp.heroku.com' : 'http://localhost:5000';
+    const baseUrl = process.env.NODE_ENV === 'production' ? 'https://naughts-and-crosses-bfca04db7241.heroku.com' : 'http://localhost:5000';
     
     const shareableLink = `${baseUrl}/game?gameId=${gameId}`;
   
