@@ -3,6 +3,8 @@ import GameBoard from './components/GameBoard';
 import GameStatus from './components/GameStatus';
 import './styles.css';
 import io from 'socket.io-client';
+import { getCookie, setCookie, generatePlayerId } from './utils';
+
 
 class Game extends Component {
   constructor(props) {
@@ -30,13 +32,18 @@ class Game extends Component {
   };
 
   componentDidMount() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('gameId');
-    if (gameId) {
-      this.setState({ joinGameId: gameId }, () => {
-        this.joinGame(); // Automatically attempt to join the game
-      });
-    }
+      let playerId = getCookie('playerId');
+      if (!playerId) {
+          playerId = generatePlayerId();
+          setCookie('playerId', playerId, 365); // Store for 365 days
+      }
+      this.playerId = playerId; // Store playerId in the component for later use
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const gameId = urlParams.get('gameId');
+      if (gameId) {
+          this.setState({ joinGameId: gameId }, this.joinGame);
+      }
   }
 
   componentWillUnmount() {
@@ -114,11 +121,11 @@ class Game extends Component {
   };
 
   createGame = () => {
-    this.socket.emit('createGame');
+    this.socket.emit('createGame', { playerId: this.playerId });
   };
 
   joinGame = () => {
-    this.socket.emit('joinGame', this.state.joinGameId);
+    this.socket.emit('joinGame', { gameId: this.state.joinGameId, playerId: this.playerId });
   };
 
   handleJoinGameInputChange = (event) => {

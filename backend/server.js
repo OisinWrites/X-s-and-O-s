@@ -17,11 +17,11 @@ app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'bu
 
 const games = {};
 
-function createGame(player1) {
+function createGame(playerId) {
   const gameId = Math.random().toString(36).substring(2, 10);
-  console.log(`Game created: ${gameId}, by player: ${player1}`);
+  console.log(`Game created: ${gameId}, by player: ${playerId}`);
   games[gameId] = {
-    players: [player1],
+    players: [playerId],
     gameBoard: Array(9).fill(null),
     currentPlayer: 'X',
     winner: null
@@ -50,10 +50,11 @@ function calculateWinner(board) {
 }
 
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('User connected:', '@'socket.id);
 
-  socket.on('createGame', () => {
-    const gameId = createGame(socket.id);
+  socket.on('createGame', (data) => {
+    const playerId = data.playerId;
+    const gameId = createGame(playerId);
     socket.join(gameId);
   
     // Check if the environment is development or production
@@ -62,13 +63,17 @@ io.on('connection', (socket) => {
     const shareableLink = `${baseUrl}/game?gameId=${gameId}`;
   
     socket.emit('gameCreated', { gameId, shareableLink });
-    console.log(`Game ${gameId} created and user ${socket.id} joined with link: ${shareableLink}`);
+    console.log(`Game ${gameId} created and user ${playerId} joined with link: ${shareableLink}`);
   });
 
-  socket.on('joinGame', (gameId) => {
+  socket.on('joinGame', (data) => {
+    const gameId = data.gameId;
+    const playerId = data.playerId;
     const game = games[gameId];
-    if (game && game.players.length === 1) {
-      game.players.push(socket.id); // Add the second player
+
+    if (game && game.players.length < 2 && !game.players.includes(playerId)) {
+
+      game.players.push(playerId);
       socket.join(gameId); // Second player joins the game room
 
       console.log(`Game ${gameId} started with players: ${game.players.join(', ')}`);
