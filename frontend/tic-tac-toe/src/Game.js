@@ -15,11 +15,14 @@ class Game extends Component {
       currentPlayer: 'X',
       winner: null,
       joinGameId: '',
-      playerSymbol: null, // Initialized as null
+      playerSymbol: null,
       isGameCreated: false,
       isGameStarted: false,
+      results: { X: 0, O: 0, draws: 0 },
+      showNewGameButton: false,
     };
 
+    this.startNewGame = this.startNewGame.bind(this);
     this.socket = io(window.location.origin);
     this.setupSocketListeners();
   }
@@ -29,6 +32,8 @@ class Game extends Component {
     this.socket.on('gameError', this.handleGameError);
     this.socket.on('gameCreated', this.handleGameCreated);
     this.socket.on('gameStart', this.handleGameStart);
+    this.socket.on('rejoinedGame', this.handleRejoinedGame);
+    this.socket.on('newGameStarted', this.handleNewGameStarted);
   };
 
   componentDidMount() {
@@ -51,6 +56,7 @@ class Game extends Component {
     this.socket.off('gameError');
     this.socket.off('gameCreated');
     this.socket.off('gameStart');
+    this.socket.off('rejoinedGame');
   }
 
   handleGameCreated = (data) => {
@@ -78,7 +84,7 @@ class Game extends Component {
 
   handleGameStart = (data) => {
     console.log('Game started:', data);
-    const playerSymbol = data.players[0] === this.socket.id ? 'X' : 'O';
+    const playerSymbol = data.players[0] === this.playerId ? 'X' : 'O';
     // Ensure the gameId is updated in the state when the game starts
     this.setState({
       gameId: data.gameId, // Set the gameId from the gameStart event data
@@ -90,13 +96,27 @@ class Game extends Component {
     });
   };
 
+  handleRejoinedGame = (data) => {
+    console.log('Successfully rejoined game:', data.gameId);
+
+    this.setState({
+      gameId: data.gameId,
+      playerSymbol: data.playerSymbol,
+      isGameCreated: true,
+      isGameStarted: true,
+    });
+  };
+  
+
   handleGameStateUpdate = (data) => {
+    const gameEnded = data.winner !== null || !data.board.includes(null);
+
     console.log('Game state update:', data);
     this.setState({
       board: data.board,
       currentPlayer: data.currentPlayer,
       winner: data.winner,
-      // No need to set isGameStarted here if it's already handled in handleGameStart
+      showNewGameButton: gameEnded,
     });
   };
 
@@ -117,7 +137,7 @@ class Game extends Component {
   };
 
   sendMoveToServer = (index) => {
-    this.socket.emit('move', { gameId: this.state.gameId, index });
+    this.socket.emit('move', { gameId: this.state.gameId, index, playerId: this.playerId });
   };
 
   createGame = () => {
@@ -132,15 +152,44 @@ class Game extends Component {
     this.setState({ joinGameId: event.target.value });
   };
 
+  startNewGame = () => {
+    console.log("Starting new game for gameId:", this.state.gameId);
+
+    this.socket.emit('startNewGame', { gameId: this.state.gameId });
+  };
+
+  handleNewGameStarted = (data) => {
+    console.log("New game data received:", data);
+
+    this.setState({
+      board: data.board, // Ensure this is a reset board
+      currentPlayer: data.currentPlayer, // Updated player to start
+      winner: null, // Clear any winner
+      showNewGameButton: false, // Hide "Start New Game" button
+      results: data.results, // Ensure this contains the updated results, including any new wins
+    });
+  };
+
   render() {
-    const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted } = this.state;
+    const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted, results, showNewGameButton } = this.state;
+    console.log("Results before rendering crowns:", this.state.results);
+    const renderCrowns = (count) => {
+      console.log("Rendering crowns for count:", count);
+      return Array(count).fill('👑').map((crown, index) => <span key={index}>{crown}</span>);
+    };
+
     return (
       <div className="game">
         {isGameCreated && isGameStarted ? (
           <>
             <p>Game ID: {this.state.gameId}</p>
+            <div>{renderCrowns(this.state.results.X)}</div> {/* For "X" player */}
+            <div>{renderCrowns(this.state.results.O)}</div> {/* For "O" player */}
             <GameBoard board={board} onSquareClick={this.handleSquareClick} />
             <GameStatus currentPlayer={currentPlayer} winner={winner} />
+            {showNewGameButton && (
+              <button onClick={this.startNewGame}>Start New Game</button>
+            )}
           </>
         ) : (
           <div>

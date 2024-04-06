@@ -21,7 +21,7 @@ function createGame(playerId) {
   const gameId = Math.random().toString(36).substring(2, 10);
   console.log(`Game created: ${gameId}, by player: ${playerId}`);
   games[gameId] = {
-    players: [playerId],
+    players: [{id: playerId, symbol: 'X'}],
     gameBoard: Array(9).fill(null),
     currentPlayer: 'X',
     winner: null
@@ -71,15 +71,38 @@ io.on('connection', (socket) => {
     const playerId = data.playerId;
     const game = games[gameId];
 
-    if (game && game.players.length < 2 && !game.players.includes(playerId)) {
+    if (!game) {
+      socket.emit('gameError', 'Game not found');
+      return;
+    }
 
-      game.players.push(playerId);
+    // Check if the player is already part of the game
+    const existingPlayer = game.players.find(p => p.id === playerId);
+
+    // Player is rejoining the game
+    if (existingPlayer) {
+      socket.join(gameId);
+      socket.emit('rejoinedGame', { gameId, playerSymbol: existingPlayer.symbol });
+
+      // Immediately send the current game state to the rejoined player
+      const gameState = {
+        board: game.gameBoard,
+        currentPlayer: game.currentPlayer,
+        winner: game.winner
+      };
+      socket.emit('gameStateUpdate', gameState);
+
+      return;
+    }
+
+
+    if (game.players.length === 1) {
+
+      game.players.push({id: playerId, symbol: 'O'});
       socket.join(gameId); // Second player joins the game room
 
-      console.log(`Game ${gameId} started with players: ${game.players.join(', ')}`);
-
       // Notify both players that the game has started
-      io.to(gameId).emit('gameStart', { gameId, players: game.players });
+      io.to(gameId).emit('gameStart', { gameId, players: game.players.map(p => p.id) });
 
       // Send the current game state to both players
       const gameState = {
@@ -89,41 +112,58 @@ io.on('connection', (socket) => {
       };
       io.to(gameId).emit('gameStateUpdate', gameState);
     } else {
-      socket.emit('gameError', 'Game not found or already full');
-      console.log(`Error joining game ${gameId}: Game not found or already full`);
+      socket.emit('gameError', 'Game already full');
     }
   });
 
-  socket.on('move', ({ gameId, index }) => {
+  socket.on('move', ({ gameId, index, playerId }) => {
     const game = games[gameId];
     if (!game) {
-      console.log(`Invalid game ID: ${gameId} for move`);
       socket.emit('gameError', 'Invalid game ID');
       return;
     }
 
-    console.log(`Received move from ${socket.id} for game ${gameId} at index ${index}`);
-
-    if (game.players.includes(socket.id) && game.players.length === 2 && game.gameBoard[index] === null) {
-      const playerSymbol = game.players.indexOf(socket.id) === 0 ? 'X' : 'O';
-      if (game.currentPlayer === playerSymbol) {
-        game.gameBoard[index] = playerSymbol;
-        const winner = calculateWinner(game.gameBoard);
-        game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
-        if (winner) {
-          game.winner = winner;
-        }
-
-        io.to(gameId).emit('gameStateUpdate', { gameId, board: game.gameBoard, currentPlayer: game.currentPlayer, winner: game.winner });
-        console.log(`Move made in game: ${gameId} by player ${playerSymbol}, board state:`, game.gameBoard);
-      } else {
-        console.log(`Invalid move by ${socket.id}: Not player's turn or invalid index`);
-        socket.emit('gameError', 'Invalid move: Not your turn or position taken');
-      }
-    } else {
-      console.log(`Invalid move attempt by ${socket.id} for game ${gameId}`);
-      socket.emit('gameError', 'Invalid move or game state');
+    const player = game.players.find(p => p.id === playerId);
+    if (!player) {
+      socket.emit('gameError', 'Player not found in this game');
+      return;
     }
+
+    if (game.gameBoard[index] === null && game.currentPlayer === player.symbol) {
+      game.gameBoard[index] = player.symbol;
+      game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+      const winner = calculateWinner(game.gameBoard);
+      if (winner) {
+        game.winner = winner;
+      }
+
+      io.to(gameId).emit('gameStateUpdate', { gameId, board: game.gameBoard, currentPlayer: game.currentPlayer, winner: game.winner });
+    } else {
+      socket.emit('gameError', 'Invalid move: Not your turn or position taken');
+    }
+  });
+
+  socket.on('startNewGame', ({ gameId }) => {
+    console.log("Received request to start new game for gameId:", gameId);
+
+    const game = games[gameId];
+    if (!game) {
+      console.log("Game not found for ID:", gameId);
+      return; // Ensure the game exists
+    }
+  
+    // Toggle starting player for the new game
+    game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+    // Reset the game board
+    game.gameBoard.fill(null);
+    game.winner = null;
+  
+    // Notify players to start a new game
+    io.to(gameId).emit('newGameStarted', {
+      board: game.gameBoard,
+      currentPlayer: game.currentPlayer,
+      results: game.results,
+    });
   });
 });
 
