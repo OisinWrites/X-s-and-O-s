@@ -5,7 +5,6 @@ import './styles.css';
 import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId } from './utils';
 
-
 class Game extends Component {
   constructor(props) {
     super(props);
@@ -37,18 +36,18 @@ class Game extends Component {
   };
 
   componentDidMount() {
-      let playerId = getCookie('playerId');
-      if (!playerId) {
-          playerId = generatePlayerId();
-          setCookie('playerId', playerId, 365); // Store for 365 days
-      }
-      this.playerId = playerId; // Store playerId in the component for later use
+    let playerId = getCookie('playerId');
+    if (!playerId) {
+      playerId = generatePlayerId();
+      setCookie('playerId', playerId, 365);
+    }
+    this.playerId = playerId;
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const gameId = urlParams.get('gameId');
-      if (gameId) {
-          this.setState({ joinGameId: gameId }, this.joinGame);
-      }
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameId = urlParams.get('gameId');
+    if (gameId) {
+      this.setState({ joinGameId: gameId }, this.joinGame);
+    }
   }
 
   componentWillUnmount() {
@@ -60,7 +59,6 @@ class Game extends Component {
   }
 
   handleGameCreated = (data) => {
-    console.log('Game created with ID:', data.gameId);
     this.setState({ gameId: data.gameId, shareableLink: data.shareableLink, isGameCreated: true }, () => {
       this.shareGameLink();
     });
@@ -76,29 +74,21 @@ class Game extends Component {
       })
       .catch(console.error);
     } else {
-      // Fallback for browsers that do not support the Web Share API
-      // Show the link in a prompt or modal for the user to copy
       alert(`Copy and share this link: ${this.state.shareableLink}`);
     }
   };
 
   handleGameStart = (data) => {
-    console.log('Game started:', data);
     const playerSymbol = data.players[0] === this.playerId ? 'X' : 'O';
-    // Ensure the gameId is updated in the state when the game starts
     this.setState({
-      gameId: data.gameId, // Set the gameId from the gameStart event data
+      gameId: data.gameId,
       isGameStarted: true,
       playerSymbol: playerSymbol,
-      isGameCreated: true, // Ensure the UI transitions for the player joining a game
-    }, () => {
-      console.log('Game state after starting:', this.state);
+      isGameCreated: true,
     });
   };
 
   handleRejoinedGame = (data) => {
-    console.log('Successfully rejoined game:', data.gameId);
-
     this.setState({
       gameId: data.gameId,
       playerSymbol: data.playerSymbol,
@@ -106,17 +96,15 @@ class Game extends Component {
       isGameStarted: true,
     });
   };
-  
 
   handleGameStateUpdate = (data) => {
     const gameEnded = data.winner !== null || !data.board.includes(null);
-
-    console.log('Game state update:', data);
     this.setState({
       board: data.board,
       currentPlayer: data.currentPlayer,
       winner: data.winner,
       showNewGameButton: gameEnded,
+      results: data.results, // Update results based on the latest gameState
     });
   };
 
@@ -126,13 +114,8 @@ class Game extends Component {
 
   handleSquareClick = (index) => {
     const { board, winner, isGameStarted, playerSymbol, currentPlayer } = this.state;
-    console.log(`Square clicked: ${index}, isGameStarted: ${isGameStarted}, currentPlayer: ${currentPlayer}, playerSymbol: ${playerSymbol}`);
-  
     if (isGameStarted && !board[index] && !winner && playerSymbol === currentPlayer) {
-      console.log(`Valid move by ${playerSymbol} at index ${index}`);
       this.sendMoveToServer(index);
-    } else {
-      console.log(`Invalid move attempt: isGameStarted=${isGameStarted}, board[index]=${board[index]}, winner=${winner}, playerSymbol=${playerSymbol}, currentPlayer=${currentPlayer}`);
     }
   };
 
@@ -153,28 +136,22 @@ class Game extends Component {
   };
 
   startNewGame = () => {
-    console.log("Starting new game for gameId:", this.state.gameId);
-
     this.socket.emit('startNewGame', { gameId: this.state.gameId });
   };
 
   handleNewGameStarted = (data) => {
-    console.log("New game data received:", data);
-
     this.setState({
-      board: data.board, // Ensure this is a reset board
-      currentPlayer: data.currentPlayer, // Updated player to start
-      winner: null, // Clear any winner
-      showNewGameButton: false, // Hide "Start New Game" button
-      results: data.results, // Ensure this contains the updated results, including any new wins
+      board: data.board,
+      currentPlayer: data.currentPlayer,
+      winner: null,
+      showNewGameButton: false,
+      results: data.results, // Ensure to update the state with the new results
     });
   };
 
   render() {
     const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted, results, showNewGameButton } = this.state;
-    console.log("Results before rendering crowns:", this.state.results);
     const renderCrowns = (count) => {
-      console.log("Rendering crowns for count:", count);
       return Array(count).fill('👑').map((crown, index) => <span key={index}>{crown}</span>);
     };
 
@@ -182,21 +159,19 @@ class Game extends Component {
       <div className="game">
         {isGameCreated && isGameStarted ? (
           <>
-            <p>Game ID: {this.state.gameId}</p>
-            <div>{renderCrowns(this.state.results.X)}</div> {/* For "X" player */}
-            <div>{renderCrowns(this.state.results.O)}</div> {/* For "O" player */}
+            <p>Game ID: {gameId}</p>
+            <div>X {renderCrowns(results.X)}</div> {/* For "X" player */}
+            <div>O {renderCrowns(results.O)}</div> {/* For "O" player */}
             <GameBoard board={board} onSquareClick={this.handleSquareClick} />
             <GameStatus currentPlayer={currentPlayer} winner={winner} />
-            {showNewGameButton && (
-              <button onClick={this.startNewGame}>Start New Game</button>
-            )}
+            {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
           </>
         ) : (
           <div>
             <button className="button" onClick={this.createGame}>Invite to Play</button>
             <input type="text" placeholder="Enter Game ID" value={this.state.joinGameId} onChange={this.handleJoinGameInputChange} />
             <button className="button" onClick={this.joinGame}>Join Game</button>
-            <p>Game ID: {this.state.gameId}</p>
+            <p>Game ID: {gameId}</p>
           </div>
         )}
       </div>
