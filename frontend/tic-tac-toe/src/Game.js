@@ -19,6 +19,7 @@ class Game extends Component {
       isGameStarted: false,
       results: { X: 0, O: 0, draws: 0 },
       showNewGameButton: false,
+      myGames: [],
     };
 
     this.startNewGame = this.startNewGame.bind(this);
@@ -33,6 +34,7 @@ class Game extends Component {
     this.socket.on('gameStart', this.handleGameStart);
     this.socket.on('rejoinedGame', this.handleRejoinedGame);
     this.socket.on('newGameStarted', this.handleNewGameStarted);
+    this.socket.on('myGamesList', this.handleMyGamesList);
   };
 
   componentDidMount() {
@@ -42,6 +44,8 @@ class Game extends Component {
       setCookie('playerId', playerId, 365);
     }
     this.playerId = playerId;
+
+    this.socket.emit('listMyGames', { playerId: this.playerId });
 
     const urlParams = new URLSearchParams(window.location.search);
     const gameId = urlParams.get('gameId');
@@ -56,6 +60,7 @@ class Game extends Component {
     this.socket.off('gameCreated');
     this.socket.off('gameStart');
     this.socket.off('rejoinedGame');
+    this.socket.off('myGamesList');
   }
 
   handleGameCreated = (data) => {
@@ -80,11 +85,13 @@ class Game extends Component {
 
   handleGameStart = (data) => {
     const playerSymbol = data.players[0] === this.playerId ? 'X' : 'O';
+    const opponentId = data.players.find(id => id !== this.playerId);
     this.setState({
       gameId: data.gameId,
       isGameStarted: true,
       playerSymbol: playerSymbol,
       isGameCreated: true,
+      opponentId: opponentId,
     });
   };
 
@@ -94,6 +101,7 @@ class Game extends Component {
       playerSymbol: data.playerSymbol,
       isGameCreated: true,
       isGameStarted: true,
+      opponentId: data.opponentId,
     });
   };
 
@@ -119,6 +127,10 @@ class Game extends Component {
     }
   };
 
+  handleMyGamesList = (data) => {
+    this.setState({ myGames: data.games });
+  };
+
   sendMoveToServer = (index) => {
     this.socket.emit('move', { gameId: this.state.gameId, index, playerId: this.playerId });
   };
@@ -129,6 +141,10 @@ class Game extends Component {
 
   joinGame = () => {
     this.socket.emit('joinGame', { gameId: this.state.joinGameId, playerId: this.playerId });
+  };
+
+  joinGameDirectly = (gameId) => {
+    this.setState({ joinGameId: gameId }, this.joinGame);
   };
 
   handleJoinGameInputChange = (event) => {
@@ -150,7 +166,7 @@ class Game extends Component {
   };
 
   render() {
-    const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted, results, showNewGameButton } = this.state;
+    const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted, results, showNewGameButton, opponentId } = this.state;
     const renderCrowns = (count) => {
       return Array(count).fill('👑').map((crown, index) => <span key={index}>{crown}</span>);
     };
@@ -160,9 +176,15 @@ class Game extends Component {
         {isGameCreated && isGameStarted ? (
           <>
             <p>Game ID: {gameId}</p>
-            <div>X {renderCrowns(results.X)}</div> {/* For "X" player */}
-            <div>O {renderCrowns(results.O)}</div> {/* For "O" player */}
+
+            <div>O {renderCrowns(results.O)}</div>
+            <div>{opponentId || 'Waiting for opponent...'}</div>
+
             <GameBoard board={board} onSquareClick={this.handleSquareClick} />
+
+            <div class="your-id">{this.playerId}</div> 
+            <div>X {renderCrowns(results.X)}</div>
+
             <GameStatus currentPlayer={currentPlayer} winner={winner} />
             {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
           </>
@@ -172,6 +194,15 @@ class Game extends Component {
             <input type="text" placeholder="Enter Game ID" value={this.state.joinGameId} onChange={this.handleJoinGameInputChange} />
             <button className="button" onClick={this.joinGame}>Join Game</button>
             <p>Game ID: {gameId}</p>
+
+            <div>
+              <h3>My Games</h3>
+              {this.state.myGames.map(gameId => (
+                <div key={gameId} onClick={() => this.joinGameDirectly(gameId)} className="game-item">
+                  Game: {gameId}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

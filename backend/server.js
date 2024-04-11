@@ -66,6 +66,19 @@ io.on('connection', (socket) => {
     console.log(`Game ${gameId} created and user ${playerId} joined with link: ${shareableLink}`);
   });
 
+  socket.on('listMyGames', (data) => {
+    const playerId = data.playerId;
+    const myGames = Object.entries(games).reduce((acc, [gameId, game]) => {
+      const isPlayerInGame = game.players.some(p => p.id === playerId);
+      if (isPlayerInGame) {
+        acc.push(gameId);
+      }
+      return acc;
+    }, []);
+  
+    socket.emit('myGamesList', { games: myGames });
+  });
+
   socket.on('joinGame', (data) => {
     const gameId = data.gameId;
     const playerId = data.playerId;
@@ -80,7 +93,15 @@ io.on('connection', (socket) => {
 
     if (existingPlayer) {
       socket.join(gameId);
-      socket.emit('rejoinedGame', { gameId, playerSymbol: existingPlayer.symbol });
+
+      const opponent = game.players.find(p => p.id !== playerId);
+      const opponentId = opponent ? opponent.id : null;
+
+      socket.emit('rejoinedGame', { 
+        gameId,
+        playerSymbol: existingPlayer.symbol,
+        opponentId,
+      });
 
       const gameState = {
         board: game.gameBoard,
