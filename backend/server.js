@@ -21,7 +21,7 @@ function createGame(playerId) {
   console.log(`Game created: ${gameId}, by player: ${playerId}`);
   games[gameId] = {
     players: [{id: playerId, symbol: 'X'}],
-    gameBoard: Array(9).fill(null),
+    gameBoard: Array(9).fill({symbol: null, imageId: null}),
     currentPlayer: 'X',
     winner: null,
     nextStarter: 'O',
@@ -133,35 +133,41 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('move', ({ gameId, index, playerId }) => {
+  socket.on('move', ({ gameId, index, playerId, symbol, imageId }) => {
     const game = games[gameId];
     if (!game) {
       socket.emit('gameError', 'Invalid game ID');
       return;
     }
-
     const player = game.players.find(p => p.id === playerId);
-    if (!player) {
-      socket.emit('gameError', 'Player not found in this game');
+    if (!player || game.gameBoard[index].symbol !== null) {
+      socket.emit('gameError', 'Invalid move: Position already taken or player not found');
       return;
     }
-
-    if (game.gameBoard[index] === null && game.currentPlayer === player.symbol) {
-      game.gameBoard[index] = player.symbol;
-      game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
-      const winner = calculateWinner(game.gameBoard);
+    if (game.currentPlayer === player.symbol) {
+      game.gameBoard[index] = { symbol: player.symbol, imageId: imageId };
+      game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';  // Correctly toggling player
+      const winner = calculateWinner(game.gameBoard.map(cell => cell.symbol));
       if (winner) {
         game.winner = winner;
-        game.results[winner] += 1; // Update results tracking
-      } else if (!game.gameBoard.includes(null)) {
-        game.results.draws += 1; // Increment draws if the board is full with no winner
+        game.results[winner] += 1;
+      } else if (!game.gameBoard.some(cell => cell.symbol === null)) {
+        game.results.draws += 1;
       }
-
-      io.to(gameId).emit('gameStateUpdate', { gameId, board: game.gameBoard, currentPlayer: game.currentPlayer, winner: game.winner, results: game.results });
+      io.to(gameId).emit('gameStateUpdate', {
+        gameId,
+        board: game.gameBoard,
+        currentPlayer: game.currentPlayer,
+        winner: game.winner,
+        results: game.results
+      });
     } else {
-      socket.emit('gameError', 'Invalid move: Not your turn or position taken');
+      socket.emit('gameError', 'Not your turn');
     }
   });
+  
+  
+  
 
   socket.on('startNewGame', ({ gameId }) => {
     const game = games[gameId];
@@ -173,7 +179,7 @@ io.on('connection', (socket) => {
     game.currentPlayer = startingSymbol;
     game.nextStarter = startingSymbol === 'X' ? 'O' : 'X';
     
-    game.gameBoard.fill(null);
+    game.gameBoard = Array(9).fill().map(() => ({ symbol: null, imageId: null }));
     game.winner = null;
   
     io.to(gameId).emit('newGameStarted', {

@@ -3,7 +3,7 @@ import GameBoard from './components/GameBoard';
 import GameStatus from './components/GameStatus';
 import './styles.css';
 import io from 'socket.io-client';
-import { getCookie, setCookie, generatePlayerId } from './utils';
+import { getCookie, setCookie, generatePlayerId, getRandomImageId, generateUsername } from './utils';
 import { Image } from 'cloudinary-react';
 
 class Game extends Component {
@@ -11,7 +11,7 @@ class Game extends Component {
     super(props);
     this.state = {
       gameId: null,
-      board: Array(9).fill(null),
+      board: Array(9).fill({symbol: null, imageId: null}),
       currentPlayer: 'X',
       winner: null,
       joinGameId: '',
@@ -40,11 +40,20 @@ class Game extends Component {
 
   componentDidMount() {
     let playerId = getCookie('playerId');
+    let username = getCookie('username');
+
     if (!playerId) {
       playerId = generatePlayerId();
+      username = generateUsername();
       setCookie('playerId', playerId, 365);
+      setCookie('username', username, 365);
+    } else if (!username) {
+      username = generateUsername();
+      setCookie('username', username, 365);
     }
+
     this.playerId = playerId;
+    this.setState({ username });
 
     this.socket.emit('listMyGames', { playerId: this.playerId });
 
@@ -122,9 +131,14 @@ class Game extends Component {
   };
 
   handleSquareClick = (index) => {
+    console.log("Square at index", index, "is currently:", this.state.board[index]);
     const { board, winner, isGameStarted, playerSymbol, currentPlayer } = this.state;
-    if (isGameStarted && !board[index] && !winner && playerSymbol === currentPlayer) {
-      this.sendMoveToServer(index);
+    if (isGameStarted && board[index].symbol === null && !winner && playerSymbol === currentPlayer) {
+      const newBoard = [...board];
+      const imageId = getRandomImageId(playerSymbol); // Use the utility function
+      newBoard[index] = {symbol: playerSymbol, imageId}; // Update the square with both symbol and image ID
+      this.setState({ board: newBoard });
+      this.sendMoveToServer(index, imageId);
     }
   };
 
@@ -132,8 +146,9 @@ class Game extends Component {
     this.setState({ myGames: data.games });
   };
 
-  sendMoveToServer = (index) => {
-    this.socket.emit('move', { gameId: this.state.gameId, index, playerId: this.playerId });
+  sendMoveToServer = (index, imageId) => {
+    const symbol = this.state.playerSymbol;
+    this.socket.emit('move', { gameId: this.state.gameId, index, playerId: this.playerId, symbol, imageId });
   };
 
   createGame = () => {
@@ -167,7 +182,7 @@ class Game extends Component {
   };
 
   render() {
-    const { isGameCreated, gameId, board, currentPlayer, winner, isGameStarted, results, showNewGameButton, opponentId } = this.state;
+    const { isGameCreated, currentPlayer, winner, isGameStarted, results, showNewGameButton, opponentId, username } = this.state;
     const renderCrowns = (count) => {
       return Array(count).fill('👑').map((crown, index) => <span key={index}>{crown}</span>);
     };
@@ -176,20 +191,16 @@ class Game extends Component {
       <div className="game midnight-green-font honeydew">
         {isGameCreated && isGameStarted ? (
           <div>
-          <div>
-          <p>Game ID: {gameId}</p>
-          </div>
+            <div>O {renderCrowns(results.O)}</div>
+            <div>{opponentId || 'Waiting for opponent...'}</div>
+            <div>{username}</div>
+            <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
 
-          <div>O {renderCrowns(results.O)}</div>
-          <div>{opponentId || 'Waiting for opponent...'}</div>
+            <div className="your-id">{this.playerId}</div> 
+            <div>X {renderCrowns(results.X)}</div>
 
-          <GameBoard className="gameboard" board={board} onSquareClick={this.handleSquareClick} />
-
-          <div class="your-id">{this.playerId}</div> 
-          <div>X {renderCrowns(results.X)}</div>
-
-          <GameStatus currentPlayer={currentPlayer} winner={winner} />
-          {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
+            <GameStatus currentPlayer={currentPlayer} winner={winner} />
+            {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
           </div>
         ) : (
           <>
