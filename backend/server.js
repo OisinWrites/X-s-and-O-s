@@ -12,7 +12,7 @@ server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build')));
+app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
 
 const games = {};
 
@@ -186,5 +186,5 @@ io.on('connection', (socket) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'tic-tac-toe', 'build', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'client', 'build', 'index.html'));
 });

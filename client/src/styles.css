@@ -1,46 +1,153 @@
 /* styles.css */
 
+/*---font---*/
+
+.gluten-bubble {
+  font-family: "Gluten", cursive;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+  font-variation-settings:
+    "slnt" 0;
+}
+
+/*---Palette---*/
+
+.dogwood {
+  background-color: #ffd5cd;
+}
+.dogwood-font {
+  color:#ffd5cd
+}
+
+.celeste {
+  background-color: #a2eff5;
+}
+.celeste-font {
+  color: #a2eff5;
+}
+
+.honeydew {
+  background-color: #d5f2e4;
+}
+.honeydew-font {
+  color: #d5f2e4;
+}
+
+.midnight-green {
+  background-color: #025e71;
+}
+.midnight-green-font {
+  color: #025e71;
+}
+
+/*---Game---*/
+
+.game {
+  height: 100vh;
+  width: 100vw;
+  font-family: "Gluten", cursive;
+}
+
+.logo {
+  padding-top: 2rem;
+}
+.logo-image {
+  width: 55vw;
+  max-width: 20rem;
+  height: auto;
+}
+
 /* Game Board */
 .board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
-    gap: 5px;
-    margin-bottom: 20px;
-  }
+  top: 15vh;
+  padding-top: 2rem;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(3, 100px);
+  gap: 0.25rem;
+  z-index: 100;
+}
+
+.grid-outline {
+  top: 15vh;
+  width: 23rem;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 1 !important;
+  opacity: 0.4;
+}
   
   /* Square */
-  .square {
-    font-size: 3em;
-    border: 1px solid #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  /* Game Status */
-  .status {
-    font-size: 1.2em;
-    margin-bottom: 20px;
-  }
+.square {
+  font-size: 3rem;
+  background-color: rgb(2, 2, 2, 0);
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 30px;
+  z-index: 10 !important;
+}
+
+/* Game Status */
+.status {
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
   
   /* Button styles */
-.button {
-  background-color: #4caf50; /* Green */
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
+
+.button-parent, .board-parent {
+  position: relative;
+  width: 100%;
+}
+
+.button-parent div {
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 2rem;
+  top: 45vh;
+  border-radius: 1.6rem;
+  width: 6rem;
+  height: 2rem;
+  border: solid #ffedea 0.2rem;
+}
+
+.invite-button {
+  border: solid #ffedea 0.4rem;
+  padding: 1.3rem 1.6rem;
   text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 1.4rem;
+  top: -1rem;
+  color:rgb(2, 94, 113, 0.85);
 }
 
 /* Button hover effect */
 .button:hover {
-  background-color: #45a049; /* Darker green */
+  background-color: #a2eff5;
+  border: solid #d5fbfd 0.4rem;
+  top: -0.6rem;
+}
+
+.my-games {
+  position: relative;
+  width: 100%;
+}
+.my-games div {
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  top: 30vh;
 }

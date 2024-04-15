@@ -4,6 +4,7 @@ import GameStatus from './components/GameStatus';
 import './styles.css';
 import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId } from './utils';
+import { Image } from 'cloudinary-react';
 
 class Game extends Component {
   constructor(props) {
@@ -172,38 +173,48 @@ class Game extends Component {
     };
 
     return (
-      <div className="game">
+      <div className="game midnight-green-font honeydew">
         {isGameCreated && isGameStarted ? (
-          <>
-            <p>Game ID: {gameId}</p>
-
-            <div>O {renderCrowns(results.O)}</div>
-            <div>{opponentId || 'Waiting for opponent...'}</div>
-
-            <GameBoard board={board} onSquareClick={this.handleSquareClick} />
-
-            <div class="your-id">{this.playerId}</div> 
-            <div>X {renderCrowns(results.X)}</div>
-
-            <GameStatus currentPlayer={currentPlayer} winner={winner} />
-            {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
-          </>
-        ) : (
           <div>
-            <button className="button" onClick={this.createGame}>Invite to Play</button>
-            <input type="text" placeholder="Enter Game ID" value={this.state.joinGameId} onChange={this.handleJoinGameInputChange} />
-            <button className="button" onClick={this.joinGame}>Join Game</button>
-            <p>Game ID: {gameId}</p>
+          <div>
+          <p>Game ID: {gameId}</p>
+          </div>
 
-            <div>
+          <div>O {renderCrowns(results.O)}</div>
+          <div>{opponentId || 'Waiting for opponent...'}</div>
+
+          <GameBoard className="gameboard" board={board} onSquareClick={this.handleSquareClick} />
+
+          <div class="your-id">{this.playerId}</div> 
+          <div>X {renderCrowns(results.X)}</div>
+
+          <GameStatus currentPlayer={currentPlayer} winner={winner} />
+          {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
+          </div>
+        ) : (
+          <>
+          <div>
+            <div className='button-parent'>
+              <div className='midnight-green'>
+                <button className="button invite-button dogwood gluten-bubble" onClick={this.createGame}>INVITE</button>
+              </div>
+            </div>
+            <div className="logo">
+              <Image className="logo-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713185054/media/xos/xopng-Photoroom_2_sx93d4.png" width="300" crop="scale" />
+            </div>
+
+            <div className='my-games'>
+              <div>
               <h3>My Games</h3>
               {this.state.myGames.map(gameId => (
                 <div key={gameId} onClick={() => this.joinGameDirectly(gameId)} className="game-item">
                   Game: {gameId}
                 </div>
               ))}
+              </div>
             </div>
-          </div>
+          </div>            
+          </>
         )}
       </div>
     );
