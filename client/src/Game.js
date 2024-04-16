@@ -214,7 +214,7 @@ class Game extends Component {
 
 
   render() {
-    const { isGameCreated, isGameStarted, results, currentPlayer, showNewGameButton, opponentId, username, winner, playerId } = this.state;
+    const { isGameCreated, isGameStarted, results, showNewGameButton, opponentId, username, winner, playerId } = this.state;
 
     const renderCrowns = (count) => {
       return Array(count).fill(
@@ -235,13 +235,11 @@ class Game extends Component {
             <button onClick={this.returnToHome} className="return-home-button midnight-green honeydew-font"><FontAwesomeIcon icon={faHouseChimneyWindow} /></button>
             <div className='opponentinfo'>
             <div>{renderCrowns(results.O)}</div>
-            <div>{opponentId || 'Waiting for opponent...'}</div>
           </div>
 
           <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
 
           <div className='playerinfo'>
-            <div>{username}</div>
             <div>{renderCrowns(results.X)}</div>
           </div>
 

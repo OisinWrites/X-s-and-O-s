@@ -177,7 +177,8 @@ io.on('connection', (socket) => {
         game.results[winner] += 1;
         game.currentPlayer = null;
         console.log(`Winner is: ${winner}`);
-      } else if (!game.gameBoard.some(cell => cell.symbol === null)) {
+      } else if (!game.gameBoard.some(cell => cell.symbol === null)) {  // Check if all cells are filled
+        game.winner = 'Draw';  // Mark the game as a draw if no cells are empty and no winner
         game.results.draws += 1;
         game.currentPlayer = null;
         console.log('Game ended in a draw');
