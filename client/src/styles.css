@@ -287,3 +287,11 @@
   left: 1rem;
   top: 1rem;
 }
+
+/*---Game Status---*/
+
+.crown-image {
+  position: relative;
+  height: 4rem;
+  margin: 0.2rem;
+}

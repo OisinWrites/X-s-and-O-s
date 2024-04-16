@@ -169,6 +169,7 @@ class Game extends Component {
 
   joinGame = () => {
     this.socket.emit('joinGame', { gameId: this.state.joinGameId, playerId: this.playerId });
+    this.updateMyGamesList();
   };
 
   joinGameDirectly = (gameId) => {

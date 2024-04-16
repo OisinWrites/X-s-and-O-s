@@ -7,6 +7,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+const socketMap = new Map();
+
 const port = process.env.PORT || 5000;
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
@@ -66,22 +68,24 @@ io.on('connection', (socket) => {
     console.log(`Game ${gameId} created and user ${playerId} joined with link: ${shareableLink}`);
   });
 
-  socket.on('listMyGames', (data) => {
-    const playerId = data.playerId;
-    const myGames = Object.entries(games).reduce((acc, [gameId, game]) => {
-      const isPlayerInGame = game.players.some(p => p.id === playerId);
-      if (isPlayerInGame) {
-        acc.push(gameId);
-      }
-      return acc;
-    }, []);
-  
-    socket.emit('myGamesList', { games: myGames });
+  socket.on('register', (playerId) => {
+    socketMap.set(playerId, socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    socketMap.delete(socket.playerId);
+  });
+
+  socket.on('listMyGames', ({ playerId }) => {
+    const playerGames = Object.entries(games).filter(([gameId, game]) => 
+        game.players.some(player => player.id === playerId)
+    ).map(([gameId]) => gameId);
+
+    socket.emit('myGamesList', { games: playerGames });
   });
 
   socket.on('joinGame', (data) => {
-    const gameId = data.gameId;
-    const playerId = data.playerId;
+    const { gameId, playerId } = data;
     const game = games[gameId];
 
     if (!game) {
@@ -128,10 +132,29 @@ io.on('connection', (socket) => {
         results: game.results // Include results in gameState
       };
       io.to(gameId).emit('gameStateUpdate', gameState);
+      updatePlayerGamesList(game.players);
     } else {
       socket.emit('gameError', 'Game already full');
     }
   });
+
+  function updatePlayerGamesList(players) {
+    players.forEach(player => {
+      const socketId = socketMap.get(player.id);
+      if (socketId && io.sockets.sockets.get(socketId)) {
+        io.to(socketId).emit('myGamesList', { games: getPlayerGames(player.id) });
+      }
+    });
+  }
+
+  function getPlayerGames(playerId) {
+    return Object.entries(games).reduce((acc, [key, value]) => {
+      if (value.players.some(p => p.id === playerId)) {
+        acc.push(key);
+      }
+      return acc;
+    }, []);
+  }
 
   socket.on('move', ({ gameId, index, playerId, symbol, imageId }) => {
     const game = games[gameId];
