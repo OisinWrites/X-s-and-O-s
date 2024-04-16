@@ -233,15 +233,25 @@ class Game extends Component {
             <div className="logo">
               <Image className="logo-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713185054/media/xos/xopng-Photoroom_2_sx93d4.png" width="300" crop="scale" />
             </div>
+
  
             <div className='my-games'>
               <div>
-              <h3>My Games</h3>
-              {this.state.myGames.map(gameId => (
-                <div key={gameId} onClick={() => this.joinGameDirectly(gameId)} className="game-item">
-                  Game: {gameId}
+                {this.state.myGames.length > 0 && (  
+                  <h3>My Games</h3>
+                )}
+                <div className='housed-x-scroller'>                
+                  {this.state.myGames.map(gameId => (
+                    <div className="active-games" key={gameId} onClick={() => this.joinGameDirectly(gameId)}>
+                      <div className="active-games-div">
+                        <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
+                      </div>
+                      <div className='active-games-name'>
+                        {gameId}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
               </div>
             </div>
           </div>            

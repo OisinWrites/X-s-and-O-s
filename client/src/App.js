@@ -6,6 +6,13 @@ function App() {
   return (
     <div className="App">
       <Game />
+      <div className='credit'>
+        <a className='portfolio-link midnight-green-font' 
+          href="https://www.oisinbanville.com/portfolio"  
+          target="_blank" 
+          rel="noopener noreferrer"
+          title="Visit Oisín's Portfolio Site" >www.oisinbanville.com</a>
+      </div>
     </div>
   );
 }
