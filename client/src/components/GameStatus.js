@@ -3,7 +3,7 @@ const GameStatus = ({ currentPlayer, winner }) => {
     if (winner) {
       status = `Winner: ${winner}`;
     } else {
-      status = `Next player: ${currentPlayer}`;
+      status = `${currentPlayer}'s Turn`;
     }
     return <div className="status">{status}</div>;
 };

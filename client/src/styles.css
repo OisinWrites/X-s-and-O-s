@@ -47,6 +47,8 @@
   height: 100vh;
   width: 100vw;
   font-family: "Gluten", cursive;
+  overflow-y: hidden;
+  overflow-x: hidden;
 }
 
 .logo {
@@ -79,7 +81,7 @@
   position: absolute;
   transform: translateX(-50%);
   z-index: 1 !important;
-  opacity: 0.4;
+  opacity: 0.2;
 }
   
   /* Square */
@@ -142,12 +144,80 @@
 }
 
 .my-games {
-  position: relative;
-  width: 100%;
-}
-.my-games div {
   left: 50%;
   position: absolute;
   transform: translateX(-50%);
+  bottom: 10rem;
+}
+.my-games div {
+  left: 50%;
+  position: fixed;
+  transform: translateX(-50%);
   top: 30vh;
+}
+
+/*---player-info---*/
+
+.playerinfo {
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  top: 60vh;
+}
+
+.opponentinfo {
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  top: 10vh;
+}
+
+/*---new-game-button---*/
+
+.new-game-button {
+  border: none;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(243, 230, 230, 0.4);
+  left: 50%;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 200;
+  top: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+@keyframes spin-backwards {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(-360deg);
+  }
+}
+
+.new-game-icon {
+  font-size: 5rem;
+  position: absolute;
+  left: 50%;
+  top: 32.5vh;
+  animation: spin 4s linear infinite;
+}
+
+.new-game-text-image {
+  font-size: 5rem;
+  position: absolute;
+  left: 50%;
+  top: 25vh;
+  height: 13rem;
+  width: 12rem;
+  animation: spin-backwards 6s linear infinite;
 }

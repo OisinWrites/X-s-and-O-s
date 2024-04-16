@@ -5,6 +5,9 @@ import './styles.css';
 import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId, getRandomImageId, generateUsername } from './utils';
 import { Image } from 'cloudinary-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
+
 
 class Game extends Component {
   constructor(props) {
@@ -116,7 +119,7 @@ class Game extends Component {
   };
 
   handleGameStateUpdate = (data) => {
-    const gameEnded = data.winner !== null || !data.board.includes(null);
+    const gameEnded = data.winner !== null || data.board.every(cell => cell.symbol !== null);
     this.setState({
       board: data.board,
       currentPlayer: data.currentPlayer,
@@ -190,19 +193,6 @@ class Game extends Component {
     return (
       <div className="game midnight-green-font honeydew">
         {isGameCreated && isGameStarted ? (
-          <div>
-            <div>O {renderCrowns(results.O)}</div>
-            <div>{opponentId || 'Waiting for opponent...'}</div>
-            <div>{username}</div>
-            <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
-
-            <div className="your-id">{this.playerId}</div> 
-            <div>X {renderCrowns(results.X)}</div>
-
-            <GameStatus currentPlayer={currentPlayer} winner={winner} />
-            {showNewGameButton && <button onClick={this.startNewGame}>Start New Game</button>}
-          </div>
-        ) : (
           <>
           <div>
             <div className='button-parent'>
@@ -210,10 +200,11 @@ class Game extends Component {
                 <button className="button invite-button dogwood gluten-bubble" onClick={this.createGame}>INVITE</button>
               </div>
             </div>
+
             <div className="logo">
               <Image className="logo-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713185054/media/xos/xopng-Photoroom_2_sx93d4.png" width="300" crop="scale" />
             </div>
-
+ 
             <div className='my-games'>
               <div>
               <h3>My Games</h3>
@@ -226,6 +217,40 @@ class Game extends Component {
             </div>
           </div>            
           </>
+        ) : (
+
+                 <div>
+                  <div className='opponentinfo'>
+                    <div>{renderCrowns(results.O)}</div>
+                    <div>{opponentId || 'Waiting for opponent...'}</div>
+                  </div>
+                 
+                 <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
+                 <GameStatus currentPlayer={currentPlayer} winner={winner} />
+     
+                 <div className='playerinfo'>
+                   <div>{username}</div>
+                   <div>{renderCrowns(results.X)}</div>
+                 </div>
+                 <div>
+                   <button className="new-game-button midnight-green-font" onClick={this.startNewGame}>
+                     <FontAwesomeIcon className="new-game-icon" icon={faRotateRight} />
+                    <div className="new-game-text">
+                      <Image className="new-game-text-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713273871/inkpx-curved-text_1_bydkfb.png" width="300" crop="scale" />
+                    </div>
+                   </button>
+                   
+                 </div>
+     
+                 
+                 {showNewGameButton && (
+                 <div>
+                   <button className="new-game-button" onClick={this.startNewGame}>
+                     <FontAwesomeIcon className="new-game-icon" icon={faRotateRight} />
+                   </button>
+                 </div>
+                 )}
+               </div>
         )}
       </div>
     );
