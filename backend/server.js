@@ -169,14 +169,20 @@ io.on('connection', (socket) => {
     }
     if (game.currentPlayer === player.symbol) {
       game.gameBoard[index] = { symbol: player.symbol, imageId: imageId };
-      game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';  // Correctly toggling player
+      game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';  // Toggles the currentPlayer
+  
       const winner = calculateWinner(game.gameBoard.map(cell => cell.symbol));
       if (winner) {
         game.winner = winner;
         game.results[winner] += 1;
+        game.currentPlayer = null;
+        console.log(`Winner is: ${winner}`);
       } else if (!game.gameBoard.some(cell => cell.symbol === null)) {
         game.results.draws += 1;
+        game.currentPlayer = null;
+        console.log('Game ended in a draw');
       }
+  
       io.to(gameId).emit('gameStateUpdate', {
         gameId,
         board: game.gameBoard,
@@ -188,8 +194,6 @@ io.on('connection', (socket) => {
       socket.emit('gameError', 'Not your turn');
     }
   });
-  
-  
   
 
   socket.on('startNewGame', ({ gameId }) => {

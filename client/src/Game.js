@@ -126,14 +126,14 @@ class Game extends Component {
   handleGameStateUpdate = (data) => {
     const gameEnded = data.winner !== null || data.board.every(cell => cell.symbol !== null);
     this.setState({
-      board: data.board,
-      currentPlayer: data.currentPlayer,
-      winner: data.winner,
-      showNewGameButton: gameEnded,
-      results: data.results, // Update results based on the latest gameState
+        board: data.board,
+        currentPlayer: data.currentPlayer,
+        winner: data.winner,
+        showNewGameButton: gameEnded,
+        results: data.results,
     });
   };
-
+  
   handleGameError = (errorMessage) => {
     console.error('Game Error:', errorMessage);
   };
@@ -214,7 +214,7 @@ class Game extends Component {
 
 
   render() {
-    const { isGameCreated, isGameStarted, results, showNewGameButton, opponentId, username, winner, playerId } = this.state;
+    const { isGameCreated, isGameStarted, results, currentPlayer, showNewGameButton, opponentId, username, winner, playerId } = this.state;
 
     const renderCrowns = (count) => {
       return Array(count).fill(
@@ -246,7 +246,12 @@ class Game extends Component {
           </div>
 
           <div className='game-status'>
-            <GameStatus currentPlayer={this.state.currentPlayer} winner={this.state.winner} playerId={this.state.playerId} />
+            <GameStatus 
+              currentPlayer={this.state.currentPlayer}
+              winner={this.state.winner}
+              playerSymbol={this.state.playerSymbol}
+              isMyTurn={this.state.currentPlayer === this.state.playerSymbol}
+            />       
           </div>
 
           {showNewGameButton && (
