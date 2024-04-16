@@ -198,65 +198,64 @@ class Game extends Component {
             <div>{renderCrowns(results.O)}</div>
             <div>{opponentId || 'Waiting for opponent...'}</div>
           </div>
-         
-         <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
-         <GameStatus currentPlayer={currentPlayer} winner={winner} />
 
-         <div className='playerinfo'>
-           <div>{username}</div>
-           <div>{renderCrowns(results.X)}</div>
-         </div>
+          <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
 
+          <div className='playerinfo'>
+            <div>{username}</div>
+            <div>{renderCrowns(results.X)}</div>
+          </div>
 
-         
-         {showNewGameButton && (
-         <div>
+          <div className='game-status'>
+            <GameStatus currentPlayer={this.state.currentPlayer} winner={this.state.winner} playerId={this.state.playerId} />
+          </div>
+
+          {showNewGameButton && (
+          <div>
           <button className="new-game-button midnight-green-font" onClick={this.startNewGame}>
             <FontAwesomeIcon className="new-game-icon" icon={faRotateRight} />
             <div className="new-game-text">
               <Image className="new-game-text-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713273871/inkpx-curved-text_1_bydkfb.png" width="300" crop="scale" />
             </div>
           </button>                 
-        </div>
-         )}
-       </div>
-         
+          </div>
+          )}
+          </div>
         ) : (
           <>
-          <div>
-            <div className='button-parent'>
-              <div className='midnight-green'>
-                <button className="button invite-button dogwood gluten-bubble" onClick={this.createGame}>INVITE</button>
-              </div>
-            </div>
-
-            <div className="logo">
-              <Image className="logo-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713185054/media/xos/xopng-Photoroom_2_sx93d4.png" width="300" crop="scale" />
-            </div>
-
- 
-            <div className='my-games'>
-              <div>
-                {this.state.myGames.length > 0 && (  
-                  <h3>My Games</h3>
-                )}
-                <div className='housed-x-scroller'>                
-                  {this.state.myGames.map(gameId => (
-                    <div className="active-games" key={gameId} onClick={() => this.joinGameDirectly(gameId)}>
-                      <div className="active-games-div">
-                        <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
-                      </div>
-                      <div className='active-games-name'>
-                        {gameId}
-                      </div>
-                    </div>
-                  ))}
+            <div>
+              <div className='button-parent'>
+                <div className='midnight-green'>
+                  <button className="button invite-button dogwood gluten-bubble" onClick={this.createGame}>INVITE</button>
                 </div>
               </div>
-            </div>
-          </div>            
-          </>    
+
+              <div className="logo">
+                <Image className="logo-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713185054/media/xos/xopng-Photoroom_2_sx93d4.png" width="300" crop="scale" />
+              </div>
+            </div>            
+          </>
         )}
+
+        <div className='my-games'>
+          <div>
+            {this.state.myGames.length > 0 && (  
+              <h3>My Games</h3>
+            )}
+            <div className='housed-x-scroller'>                
+              {this.state.myGames.map(gameId => (
+                <div className="active-games" key={gameId} onClick={() => this.joinGameDirectly(gameId)}>
+                  <div className="active-games-div">
+                    <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
+                  </div>
+                  <div className='active-games-name'>
+                    {gameId}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

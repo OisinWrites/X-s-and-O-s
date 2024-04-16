@@ -215,7 +215,7 @@
   left: 50%;
   position: fixed;
   transform: translateX(-50%);
-  top: 70vh;
+  top: 75vh;
 }
 
 .housed-x-scroller {
@@ -255,4 +255,17 @@
   transform: translateX(-50%);
   bottom: 1rem;
   text-decoration: none;
+}
+
+/*---Game Status---*/
+
+.winner-banner {
+  font-size: 5rem;
+}
+
+.game-status {
+  left: 50%;
+  position: fixed;
+  transform: translateX(-50%);
+  top: 70vh;
 }
