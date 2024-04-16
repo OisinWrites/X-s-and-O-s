@@ -77,8 +77,13 @@ class Game extends Component {
   }
 
   handleGameCreated = (data) => {
-    this.setState({ gameId: data.gameId, shareableLink: data.shareableLink, isGameCreated: true }, () => {
-      this.shareGameLink();
+    this.setState({
+        gameId: data.gameId,
+        shareableLink: data.shareableLink,
+        isGameCreated: true
+    }, () => {
+        this.shareGameLink();
+        this.updateMyGamesList();  // Fetch the updated list of games
     });
   };
 
@@ -145,6 +150,10 @@ class Game extends Component {
     }
   };
 
+  updateMyGamesList = () => {
+    this.socket.emit('listMyGames', { playerId: this.playerId });
+  };
+
   handleMyGamesList = (data) => {
     this.setState({ myGames: data.games });
   };
@@ -187,12 +196,16 @@ class Game extends Component {
   returnToHome = () => {
     this.setState({
       gameId: null,
-      isGameCreated: false,
-      isGameStarted: false,
+      board: Array(9).fill({symbol: null, imageId: null}),
       currentPlayer: 'X',
       winner: null,
-      opponentId: null,
-      showNewGameButton: false
+      joinGameId: '',
+      playerSymbol: null,
+      isGameCreated: false,
+      isGameStarted: false,
+      results: { X: 0, O: 0, draws: 0 },
+      showNewGameButton: false,
+      myGames: [],
     });
   };
 
