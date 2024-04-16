@@ -6,7 +6,7 @@ import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId, getRandomImageId, generateUsername } from './utils';
 import { Image } from 'cloudinary-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faRotateRight, faHouseChimneyWindow } from '@fortawesome/free-solid-svg-icons';
 
 
 class Game extends Component {
@@ -184,8 +184,20 @@ class Game extends Component {
     });
   };
 
+  returnToHome = () => {
+    this.setState({
+      gameId: null,
+      isGameCreated: false,
+      isGameStarted: false,
+      currentPlayer: 'X',
+      winner: null,
+      opponentId: null,
+      showNewGameButton: false
+    });
+  };
+
   render() {
-    const { isGameCreated, currentPlayer, winner, isGameStarted, results, showNewGameButton, opponentId, username } = this.state;
+    const { isGameCreated, isGameStarted, results, showNewGameButton, opponentId, username } = this.state;
     const renderCrowns = (count) => {
       return Array(count).fill('👑').map((crown, index) => <span key={index}>{crown}</span>);
     };
@@ -194,7 +206,8 @@ class Game extends Component {
       <div className="game midnight-green-font honeydew">
         {isGameCreated && isGameStarted ? (
           <div>
-          <div className='opponentinfo'>
+            <button onClick={this.returnToHome} className="return-home-button midnight-green honeydew-font"><FontAwesomeIcon icon={faHouseChimneyWindow} /></button>
+            <div className='opponentinfo'>
             <div>{renderCrowns(results.O)}</div>
             <div>{opponentId || 'Waiting for opponent...'}</div>
           </div>
