@@ -196,24 +196,36 @@ class Game extends Component {
 
   returnToHome = () => {
     this.setState({
-      gameId: null,
-      board: Array(9).fill({symbol: null, imageId: null}),
-      currentPlayer: 'X',
-      winner: null,
-      joinGameId: '',
-      playerSymbol: null,
-      isGameCreated: false,
-      isGameStarted: false,
-      results: { X: 0, O: 0, draws: 0 },
-      showNewGameButton: false,
-      myGames: [],
+        gameId: null,
+        board: Array(9).fill({symbol: null, imageId: null}),
+        currentPlayer: 'X',
+        winner: null,
+        joinGameId: '',
+        playerSymbol: null,
+        isGameCreated: false,
+        isGameStarted: false,
+        results: { X: 0, O: 0, draws: 0 },
+        showNewGameButton: false,
+        myGames: [],  // Clear existing games to force a re-fetch
+    }, () => {
+        this.updateMyGamesList();  // Fetch the updated list of games
     });
   };
 
+
   render() {
-    const { isGameCreated, isGameStarted, results, showNewGameButton, opponentId, username } = this.state;
+    const { isGameCreated, isGameStarted, results, showNewGameButton, opponentId, username, winner, playerId } = this.state;
+
     const renderCrowns = (count) => {
-      return Array(count).fill('👑').map((crown, index) => <span key={index}>{crown}</span>);
+      return Array(count).fill(
+        <Image 
+          className="crown-image"
+          cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME"
+          publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713195282/media/xos/crowns/crowns7_wiztl9.png"
+          crop="scale" 
+        />
+
+      ).map((crown, index) => <span key={index}>{crown}</span>);
     };
 
     return (
