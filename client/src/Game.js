@@ -6,7 +6,15 @@ import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId, getRandomImageId, generateUsername } from './utils';
 import { Image } from 'cloudinary-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateRight, faHouseChimneyWindow, faSquareXmark, faTrashCan, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faRotateRight, 
+  faHouseChimneyWindow, 
+  faSquareXmark, 
+  faTrashCan, 
+  faCircleExclamation, 
+  faArrowsRotate,
+  faPencil
+ } from '@fortawesome/free-solid-svg-icons';
 
 
 class Game extends Component {
@@ -26,6 +34,8 @@ class Game extends Component {
       myGames: [],
       gameToDelete: null,
       showDeleteConfirmation: false,
+      editingGameId: null,
+      customNames: {},
     };
 
     this.startNewGame = this.startNewGame.bind(this);
@@ -57,6 +67,9 @@ class Game extends Component {
       username = generateUsername();
       setCookie('username', username, 365);
     }
+
+    const customNames = JSON.parse(localStorage.getItem('customNames')) || {};
+    this.setState({ customNames });
 
     this.playerId = playerId;
     this.setState({ username });
@@ -163,6 +176,27 @@ class Game extends Component {
     this.setState({ myGames: filteredGames });
   };
   
+  handleEditClick = (gameId) => {
+    this.setState({ editingGameId: gameId });
+  }
+
+  handleNameChange = (event, gameId) => {
+    const { customNames } = this.state;
+    customNames[gameId] = event.target.value;
+    this.setState({ customNames });
+  }
+
+  handleNameSubmit = (gameId) => {
+    this.setState({ editingGameId: null });
+    this.saveGameName(gameId, this.state.customNames[gameId]);
+  }
+
+  saveGameName = (gameId, gameName) => {
+    const { customNames } = this.state;
+    customNames[gameId] = gameName;
+    localStorage.setItem('customNames', JSON.stringify(customNames));
+    this.setState({ customNames });
+  }
 
   sendMoveToServer = (index, imageId) => {
     const symbol = this.state.playerSymbol;
@@ -212,6 +246,12 @@ class Game extends Component {
       results: data.results, // Ensure to update the state with the new results
     });
   };
+  
+  handleKeyDown = (event, gameId) => {
+    if (event.key === 'Enter') {
+      this.handleNameSubmit(gameId);
+      event.preventDefault();
+  }};
 
   handleGameDeleted = (data) => {
     const { gameId } = data;
@@ -220,8 +260,7 @@ class Game extends Component {
       gameToDelete: null,
       showDeleteConfirmation: false,
     }));
-  };
-  
+  }; 
 
   returnToHome = () => {
     this.setState({
@@ -244,28 +283,49 @@ class Game extends Component {
   };
 
   renderMyGamesList = () => {
-    const { myGames } = this.state;
+    const { myGames, editingGameId, customNames } = this.state;
     return (
       <div className='my-games'>
         {myGames.length > 0 && (
-          <h3>My Games</h3>
+          <div>
+            <h3>My Games</h3>
+          </div>
         )}
         <div className='housed-x-scroller'>
           {myGames.map(({ gameId, isMyTurn }) => (
             <div className="active-games" key={gameId}>
               <div onClick={() => this.joinGameDirectly(gameId)} className="active-games-div">
                 <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
-                <div className='active-games-name'>
-                  {gameId}
-                  <span className="turn-status">
+                <div className="turn-status">
                     {isMyTurn ? (
                     <div className='your-turn'>
                         <FontAwesomeIcon icon={faCircleExclamation} />
                       </div>
                     ) : null}
-                  </span>
                 </div>
+
               </div>
+
+              <div className='active-games-name'>
+                {editingGameId === gameId ? (
+                  <input
+                    className='edit-game-name-input dogwood midnight-green-font'
+                    type="text"
+                    value={customNames[gameId] || ''}
+                    onChange={(e) => this.handleNameChange(e, gameId)}
+                    onBlur={() => this.handleNameSubmit(gameId)}
+                    onKeyDown={(e) => this.handleKeyDown(e, gameId)}
+                    maxLength={8}
+                    autoFocus
+                  />
+                ) : (
+                  <div onClick={() => this.handleEditClick(gameId)} className="active-games-names">
+                    {customNames[gameId] || gameId}
+                    <FontAwesomeIcon className="midnight-green-font" icon={ faPencil} />
+                  </div>
+                )}
+              </div>
+
               <button className="celeste-font" onClick={(e) => { e.stopPropagation(); this.handleDeleteGame(gameId); }}>
                 <FontAwesomeIcon icon={faTrashCan} />
               </button>
@@ -278,13 +338,15 @@ class Game extends Component {
 
 
   render() {
-    const { 
+    const {
+      gameId,
       isGameCreated,
       isGameStarted, 
       results,
       showNewGameButton, 
       showDeleteConfirmation,
-      playerSymbol 
+      playerSymbol,
+      customNames
       } = this.state;
 
     const opponentSymbol = playerSymbol === 'X' ? 'O' : 'X';
@@ -304,14 +366,25 @@ class Game extends Component {
 
     return (
       <div className="game midnight-green-font honeydew">
+          <button onClick={this.returnToHome} className="return-home-button midnight-green honeydew-font"><FontAwesomeIcon icon={faHouseChimneyWindow} /></button>
+
+          <div>
+            <div className="refresh-div">
+              <button onClick={this.updateMyGamesList} className="refresh-button midnight-green-font">
+                <FontAwesomeIcon icon={faArrowsRotate}/>
+              </button>
+              <p>Refresh</p>
+              <p>Games</p>
+            </div>
+          </div>
         {isGameCreated && isGameStarted ? (
           <div>
-            <button onClick={this.returnToHome} className="return-home-button midnight-green honeydew-font"><FontAwesomeIcon icon={faHouseChimneyWindow} /></button>
             <div className='opponentinfo'>
               {renderCrowns(results[opponentSymbol])}
             </div>
 
             <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
+            <div className='game-name'>{customNames[gameId] || gameId}</div>
 
             <div className='playerinfo'>
               {renderCrowns(results[playerSymbol])}
