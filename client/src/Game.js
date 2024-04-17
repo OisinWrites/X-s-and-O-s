@@ -74,6 +74,8 @@ class Game extends Component {
     this.playerId = playerId;
     this.setState({ username });
 
+    this.gameEndTimeout = null;
+
     this.socket.emit('listMyGames', { playerId: this.playerId });
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -84,6 +86,9 @@ class Game extends Component {
   }
 
   componentWillUnmount() {
+    if (this.gameEndTimeout) {
+      clearTimeout(this.gameEndTimeout);
+    }
     this.socket.off('gameStateUpdate');
     this.socket.off('gameError');
     this.socket.off('gameCreated');
@@ -145,9 +150,21 @@ class Game extends Component {
         board: data.board,
         currentPlayer: data.currentPlayer,
         winner: data.winner,
-        showNewGameButton: gameEnded,
         results: data.results,
     });
+
+    if (gameEnded) {
+      // Clear any existing timeout
+      if (this.gameEndTimeout) {
+          clearTimeout(this.gameEndTimeout);
+      }
+      // Set a new timeout
+      this.gameEndTimeout = setTimeout(() => {
+          this.setState({ showNewGameButton: true });
+      }, 1500);
+    } else {
+      this.setState({ showNewGameButton: false });
+    }
   };
   
   handleGameError = (errorMessage) => {
@@ -320,8 +337,8 @@ class Game extends Component {
                   />
                 ) : (
                   <div onClick={() => this.handleEditClick(gameId)} className="active-games-names">
-                    {customNames[gameId] || gameId}
-                    <FontAwesomeIcon className="midnight-green-font" icon={ faPencil} />
+                    <div>{customNames[gameId] || gameId}
+                    <FontAwesomeIcon className="midnight-green-font" icon={ faPencil} /></div>
                   </div>
                 )}
               </div>

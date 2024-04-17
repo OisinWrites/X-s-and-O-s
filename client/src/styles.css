@@ -290,6 +290,9 @@
 
 .active-games-names {
   width: 4rem;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
 }
 
 .edit-game-name-input {
@@ -388,7 +391,7 @@
   position: fixed;
   transform: translateX(-50%);
   top: 67vh;
-  z-index: 1100;
+  z-index: 3100;
 }
 
 /*---return-home-button---*/
