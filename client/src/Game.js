@@ -6,8 +6,7 @@ import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId, getRandomImageId, generateUsername } from './utils';
 import { Image } from 'cloudinary-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateRight, faHouseChimneyWindow } from '@fortawesome/free-solid-svg-icons';
-
+import { faRotateRight, faHouseChimneyWindow, faSquareXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 
 class Game extends Component {
   constructor(props) {
@@ -24,6 +23,8 @@ class Game extends Component {
       results: { X: 0, O: 0, draws: 0 },
       showNewGameButton: false,
       myGames: [],
+      gameToDelete: null,
+      showDeleteConfirmation: false,
     };
 
     this.startNewGame = this.startNewGame.bind(this);
@@ -39,6 +40,7 @@ class Game extends Component {
     this.socket.on('rejoinedGame', this.handleRejoinedGame);
     this.socket.on('newGameStarted', this.handleNewGameStarted);
     this.socket.on('myGamesList', this.handleMyGamesList);
+    this.socket.on('gameDeleted', this.handleGameDeleted);
   };
 
   componentDidMount() {
@@ -180,6 +182,19 @@ class Game extends Component {
     this.setState({ joinGameId: event.target.value });
   };
 
+  handleDeleteGame = gameId => {
+    this.setState({ gameToDelete: gameId, showDeleteConfirmation: true });
+  };
+  
+  confirmDelete = () => {
+    this.socket.emit('deleteGame', { gameId: this.state.gameToDelete, playerId: this.playerId });
+    this.setState({ gameToDelete: null, showDeleteConfirmation: false });
+  };
+  
+  cancelDelete = () => {
+    this.setState({ gameToDelete: null, showDeleteConfirmation: false });
+  };
+
   startNewGame = () => {
     this.socket.emit('startNewGame', { gameId: this.state.gameId });
   };
@@ -194,6 +209,16 @@ class Game extends Component {
     });
   };
 
+  handleGameDeleted = (data) => {
+    const { gameId } = data;
+    this.setState(prevState => ({
+      myGames: prevState.myGames.filter(id => id !== gameId),
+      gameToDelete: null,
+      showDeleteConfirmation: false,
+    }));
+  };
+  
+
   returnToHome = () => {
     this.setState({
         gameId: null,
@@ -206,7 +231,9 @@ class Game extends Component {
         isGameStarted: false,
         results: { X: 0, O: 0, draws: 0 },
         showNewGameButton: false,
-        myGames: [],  // Clear existing games to force a re-fetch
+        myGames: [],
+        gameToDelete: null,
+        showDeleteConfirmation: false,
     }, () => {
         this.updateMyGamesList();  // Fetch the updated list of games
     });
@@ -214,7 +241,13 @@ class Game extends Component {
 
 
   render() {
-    const { isGameCreated, isGameStarted, results, showNewGameButton, opponentId, username, winner, playerId } = this.state;
+    const { 
+      isGameCreated,
+      isGameStarted, 
+      results, 
+      showNewGameButton, 
+      showDeleteConfirmation, 
+      } = this.state;
 
     const renderCrowns = (count) => {
       return Array(count).fill(
@@ -234,8 +267,8 @@ class Game extends Component {
           <div>
             <button onClick={this.returnToHome} className="return-home-button midnight-green honeydew-font"><FontAwesomeIcon icon={faHouseChimneyWindow} /></button>
             <div className='opponentinfo'>
-            <div>{renderCrowns(results.O)}</div>
-          </div>
+              <div>{renderCrowns(results.O)}</div>
+            </div>
 
           <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
 
@@ -278,22 +311,33 @@ class Game extends Component {
             </div>            
           </>
         )}
-
+        {showDeleteConfirmation && (
+        <div className="delete-confirmation"> 
+          <div className='midnight-green delete-border'>
+            <div className="delete-confirmation-inner dogwood midnight-green-font">
+              <p>Are you sure you want to delete this game?</p>
+              <button className='dogwood red-danger' onClick={this.confirmDelete}><FontAwesomeIcon icon={faTrashCan}/></button>
+              <button className="dogwood midnight-green-font" onClick={this.cancelDelete}><FontAwesomeIcon icon={faSquareXmark}/></button>
+            </div>
+          </div>
+        </div>
+        )}
+        
         <div className='my-games'>
           <div>
             {this.state.myGames.length > 0 && (  
               <h3>My Games</h3>
             )}
-            <div className='housed-x-scroller'>                
+            <div className='housed-x-scroller'>
+
               {this.state.myGames.map(gameId => (
-                <div className="active-games" key={gameId} onClick={() => this.joinGameDirectly(gameId)}>
-                  <div className="active-games-div">
-                    <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
-                  </div>
-                  <div className='active-games-name'>
-                    {gameId}
-                  </div>
+                <div className="active-games" key={gameId}>
+                <div onClick={() => this.joinGameDirectly(gameId)} className="active-games-div">
+                <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
+                <div className='active-games-name'>{gameId}</div>
                 </div>
+                <button className="celeste-font" onClick={() => this.handleDeleteGame(gameId)}><FontAwesomeIcon icon={faTrashCan}/></button>
+              </div>
               ))}
             </div>
           </div>

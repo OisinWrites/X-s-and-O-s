@@ -80,7 +80,6 @@ io.on('connection', (socket) => {
     const playerGames = Object.entries(games).filter(([gameId, game]) => 
         game.players.some(player => player.id === playerId)
     ).map(([gameId]) => gameId);
-
     socket.emit('myGamesList', { games: playerGames });
   });
 
@@ -142,7 +141,8 @@ io.on('connection', (socket) => {
     players.forEach(player => {
       const socketId = socketMap.get(player.id);
       if (socketId && io.sockets.sockets.get(socketId)) {
-        io.to(socketId).emit('myGamesList', { games: getPlayerGames(player.id) });
+        const playerGames = getPlayerGames(player.id);
+        io.to(socketId).emit('myGamesList', { games: playerGames });
       }
     });
   }
@@ -155,6 +155,20 @@ io.on('connection', (socket) => {
       return acc;
     }, []);
   }
+
+  socket.on('deleteGame', (data) => {
+    const { gameId, playerId } = data;
+    if (games[gameId] && games[gameId].players.some(player => player.id === playerId)) {
+      const players = games[gameId].players;  // Capture the players before deleting the game
+      delete games[gameId];  // Delete the game
+      io.to(gameId).emit('gameDeleted', { gameId });
+      console.log(`Game deleted: ${gameId}`);
+      updatePlayerGamesList(players);  // Now update the games list for the remaining players
+    } else {
+      socket.emit('gameError', 'Cannot delete game: Not found or unauthorized');
+    }
+  });
+  
 
   socket.on('move', ({ gameId, index, playerId, symbol, imageId }) => {
     const game = games[gameId];

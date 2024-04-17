@@ -160,7 +160,7 @@
   left: 50%;
   position: absolute;
   transform: translateX(-50%);
-  top: 10vh;
+  top: 8vh;
 }
 
 /*---new-game-button---*/
@@ -246,6 +246,57 @@
   height: 4rem;
 }
 
+.active-games button {
+  border: none;
+  background: none;
+  position: absolute;
+  font-size: 1rem;
+  top: 4rem;
+  background-color: #ff2a00;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 3rem;
+  padding: 0.2rem;
+  margin-left: 0.7rem;
+  top: 4.4rem;
+}
+
+.delete-confirmation {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  top: 0;
+  background-color: rgb(2, 2, 2, 0.2);
+  z-index: 500;
+}
+
+.delete-border {
+  padding: 1rem;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  top: 42vh;
+  border: solid #d5fbfd 0.2rem;
+  border-radius:1.6rem;
+  padding-bottom: 2rem;
+}
+
+.delete-confirmation-inner {
+  border: solid #ffedea 0.2rem;
+  border-radius: 1.4rem;
+  width: 16rem;
+  font-size: 1.4rem;
+}
+
+.delete-confirmation-inner button {
+  border: none;
+  font-size: 3rem;
+  margin-inline: 2rem;
+}
+
+.red-danger {
+  color:#ff3c15e1;
+}
 /*---Webstie link---*/
 
 .credit {
@@ -259,6 +310,7 @@
   transform: translateX(-50%);
   bottom: 1rem;
   text-decoration: none;
+  z-index: 1100;
 }
 
 /*---Game Status---*/
@@ -272,6 +324,7 @@
   position: fixed;
   transform: translateX(-50%);
   top: 70vh;
+  z-index: 1100;
 }
 
 /*---return-home-button---*/
@@ -295,3 +348,4 @@
   height: 4rem;
   margin: 0.2rem;
 }
+
