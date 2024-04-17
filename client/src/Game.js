@@ -6,7 +6,8 @@ import io from 'socket.io-client';
 import { getCookie, setCookie, generatePlayerId, getRandomImageId, generateUsername } from './utils';
 import { Image } from 'cloudinary-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateRight, faHouseChimneyWindow, faSquareXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faRotateRight, faHouseChimneyWindow, faSquareXmark, faTrashCan, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+
 
 class Game extends Component {
   constructor(props) {
@@ -157,8 +158,11 @@ class Game extends Component {
   };
 
   handleMyGamesList = (data) => {
-    this.setState({ myGames: data.games });
+    const currentGameId = this.state.gameId; // the ID of the current game
+    const filteredGames = data.games.filter(game => game.gameId !== currentGameId); // Remove the current game from the list
+    this.setState({ myGames: filteredGames });
   };
+  
 
   sendMoveToServer = (index, imageId) => {
     const symbol = this.state.playerSymbol;
@@ -239,27 +243,64 @@ class Game extends Component {
     });
   };
 
+  renderMyGamesList = () => {
+    const { myGames } = this.state;
+    return (
+      <div className='my-games'>
+        {myGames.length > 0 && (
+          <h3>My Games</h3>
+        )}
+        <div className='housed-x-scroller'>
+          {myGames.map(({ gameId, isMyTurn }) => (
+            <div className="active-games" key={gameId}>
+              <div onClick={() => this.joinGameDirectly(gameId)} className="active-games-div">
+                <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
+                <div className='active-games-name'>
+                  {gameId}
+                  <span className="turn-status">
+                    {isMyTurn ? (
+                    <div className='your-turn'>
+                        <FontAwesomeIcon icon={faCircleExclamation} />
+                      </div>
+                    ) : null}
+                  </span>
+                </div>
+              </div>
+              <button className="celeste-font" onClick={(e) => { e.stopPropagation(); this.handleDeleteGame(gameId); }}>
+                <FontAwesomeIcon icon={faTrashCan} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
 
   render() {
     const { 
       isGameCreated,
       isGameStarted, 
-      results, 
+      results,
       showNewGameButton, 
-      showDeleteConfirmation, 
+      showDeleteConfirmation,
+      playerSymbol 
       } = this.state;
 
-    const renderCrowns = (count) => {
-      return Array(count).fill(
+    const opponentSymbol = playerSymbol === 'X' ? 'O' : 'X';
+
+
+    const renderCrowns = (count) => (
+      Array(count).fill().map((_, index) => (
         <Image 
+          key={index}
           className="crown-image"
           cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME"
           publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713195282/media/xos/crowns/crowns7_wiztl9.png"
           crop="scale" 
         />
-
-      ).map((crown, index) => <span key={index}>{crown}</span>);
-    };
+      ))
+    );
 
     return (
       <div className="game midnight-green-font honeydew">
@@ -267,23 +308,23 @@ class Game extends Component {
           <div>
             <button onClick={this.returnToHome} className="return-home-button midnight-green honeydew-font"><FontAwesomeIcon icon={faHouseChimneyWindow} /></button>
             <div className='opponentinfo'>
-              <div>{renderCrowns(results.O)}</div>
+              {renderCrowns(results[opponentSymbol])}
             </div>
 
-          <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
+            <GameBoard className="gameboard" board={this.state.board} onSquareClick={this.handleSquareClick} />
 
-          <div className='playerinfo'>
-            <div>{renderCrowns(results.X)}</div>
-          </div>
+            <div className='playerinfo'>
+              {renderCrowns(results[playerSymbol])}
+            </div>
 
-          <div className='game-status'>
-            <GameStatus 
-              currentPlayer={this.state.currentPlayer}
-              winner={this.state.winner}
-              playerSymbol={this.state.playerSymbol}
-              isMyTurn={this.state.currentPlayer === this.state.playerSymbol}
-            />       
-          </div>
+            <div className='game-status'>
+              <GameStatus 
+                currentPlayer={this.state.currentPlayer}
+                winner={this.state.winner}
+                playerSymbol={this.state.playerSymbol}
+                isMyTurn={this.state.currentPlayer === this.state.playerSymbol}
+              />       
+            </div>
 
           {showNewGameButton && (
           <div>
@@ -323,24 +364,8 @@ class Game extends Component {
         </div>
         )}
         
-        <div className='my-games'>
-          <div>
-            {this.state.myGames.length > 0 && (  
-              <h3>My Games</h3>
-            )}
-            <div className='housed-x-scroller'>
-
-              {this.state.myGames.map(gameId => (
-                <div className="active-games" key={gameId}>
-                <div onClick={() => this.joinGameDirectly(gameId)} className="active-games-div">
-                <Image className="active-games-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713277107/433-Photoroom_bgin2q.png" crop="scale" />
-                <div className='active-games-name'>{gameId}</div>
-                </div>
-                <button className="celeste-font" onClick={() => this.handleDeleteGame(gameId)}><FontAwesomeIcon icon={faTrashCan}/></button>
-              </div>
-              ))}
-            </div>
-          </div>
+        <div className="game-list-container">
+          {this.renderMyGamesList()}
         </div>
       </div>
     );

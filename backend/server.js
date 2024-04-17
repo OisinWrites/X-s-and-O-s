@@ -78,8 +78,12 @@ io.on('connection', (socket) => {
 
   socket.on('listMyGames', ({ playerId }) => {
     const playerGames = Object.entries(games).filter(([gameId, game]) => 
-        game.players.some(player => player.id === playerId)
-    ).map(([gameId]) => gameId);
+      game.players.some(player => player.id === playerId)
+    ).map(([gameId, game]) => {
+      const isMyTurn = game.currentPlayer === game.players.find(p => p.id === playerId).symbol;
+      return { gameId, isMyTurn };  // Now also returning whether it is the player's turn
+    });
+  
     socket.emit('myGamesList', { games: playerGames });
   });
 
@@ -187,8 +191,8 @@ io.on('connection', (socket) => {
   
       const winner = calculateWinner(game.gameBoard.map(cell => cell.symbol));
       if (winner) {
-        game.winner = winner;
         game.results[winner] += 1;
+        game.winner = winner;
         game.currentPlayer = null;
         console.log(`Winner is: ${winner}`);
       } else if (!game.gameBoard.some(cell => cell.symbol === null)) {  // Check if all cells are filled
@@ -210,20 +214,27 @@ io.on('connection', (socket) => {
     }
   });
   
-
   socket.on('startNewGame', ({ gameId }) => {
     const game = games[gameId];
     if (!game) {
+      socket.emit('gameError', 'Game not found');
       return;
     }
-
+  
+    // If any player has reached 3 crowns, reset the results for both players
+    if (game.results['X'] >= 3 || game.results['O'] >= 3) {
+      game.results['X'] = 0;
+      game.results['O'] = 0;
+    }
+  
+    // Reset the game board and current player
     const startingSymbol = game.nextStarter === 'X' ? 'X' : 'O';
     game.currentPlayer = startingSymbol;
     game.nextStarter = startingSymbol === 'X' ? 'O' : 'X';
-    
-    game.gameBoard = Array(9).fill().map(() => ({ symbol: null, imageId: null }));
+    game.gameBoard = Array(9).fill({ symbol: null, imageId: null });
     game.winner = null;
   
+    // Emit the new game state to all players in the game
     io.to(gameId).emit('newGameStarted', {
       board: game.gameBoard,
       currentPlayer: game.currentPlayer,
@@ -231,6 +242,7 @@ io.on('connection', (socket) => {
       results: game.results,
     });
   });
+  
 });
 
 app.get('*', (req, res) => {

@@ -154,13 +154,15 @@
   position: absolute;
   transform: translateX(-50%);
   top: 60vh;
+  z-index: 2000;
 }
 
 .opponentinfo {
   left: 50%;
   position: absolute;
-  transform: translateX(-50%);
-  top: 8vh;
+  transform: translateX(-50%) rotate(180deg);
+  top: 4vh;
+  z-index: 2000;
 }
 
 /*---new-game-button---*/
@@ -259,6 +261,18 @@
   padding: 0.2rem;
   margin-left: 0.7rem;
   top: 4.4rem;
+}
+
+.your-turn {
+  position: absolute;
+  font-size: 4rem;
+  background: #ffffff;
+  border-radius: 50%;
+  height: 4rem;
+  top: 4.3rem;
+  margin-left: 0.28rem;
+  color: #025e71d0;
+  opacity: .7;
 }
 
 .delete-confirmation {
