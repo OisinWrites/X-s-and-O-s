@@ -94,33 +94,56 @@ io.on('connection', (socket) => {
     const game = games[gameId];
 
     if (!game) {
-        socket.emit('gameError', 'Game not found');
-        return;
+      socket.emit('gameError', 'Game not found');
+      return;
+    }
+
+    const existingPlayer = game.players.find(p => p.id === playerId);
+
+    if (existingPlayer) {
+      socket.join(gameId);
+
+      const opponent = game.players.find(p => p.id !== playerId);
+      const opponentId = opponent ? opponent.id : null;
+
+      socket.emit('rejoinedGame', { 
+        gameId,
+        playerSymbol: existingPlayer.symbol,
+        opponentId,
+      });
+
+      const gameState = {
+        board: game.gameBoard,
+        currentPlayer: game.currentPlayer,
+        winner: game.winner,
+        results: game.results // Include results in gameState
+      };
+      socket.emit('gameStateUpdate', gameState);
+
+      return;
     }
 
     if (game.players.length === 1) {
-        game.players.push({id: playerId, symbol: 'O'});
-        socket.join(gameId);
 
-        // Call to delete duplicate games
-        deleteExistingGames(gameId);
+      game.players.push({id: playerId, symbol: 'O'});
+      socket.join(gameId);
 
-        // Notify all clients about the game start
-        io.to(gameId).emit('gameStart', { gameId, players: game.players.map(p => p.id) });
+      deleteExistingGames(gameId);
 
-        // Update game state as necessary
-        const gameState = {
-            board: game.gameBoard,
-            currentPlayer: game.currentPlayer,
-            winner: game.winner,
-            results: game.results
-        };
-        io.to(gameId).emit('gameStateUpdate', gameState);
+      io.to(gameId).emit('gameStart', { gameId, players: game.players.map(p => p.id) });
+
+      const gameState = {
+        board: game.gameBoard,
+        currentPlayer: game.currentPlayer,
+        winner: game.winner,
+        results: game.results // Include results in gameState
+      };
+      io.to(gameId).emit('gameStateUpdate', gameState);
+      updatePlayerGamesList(game.players);
     } else {
-        socket.emit('gameError', 'Game already full');
+      socket.emit('gameError', 'Game already full');
     }
-});
-
+  });
 
   function updatePlayerGamesList(players) {
     players.forEach(player => {
