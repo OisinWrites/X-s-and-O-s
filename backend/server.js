@@ -78,7 +78,8 @@ io.on('connection', (socket) => {
 
   socket.on('listMyGames', ({ playerId }) => {
     const playerGames = Object.entries(games).filter(([gameId, game]) => 
-      game.players.some(player => player.id === playerId)
+      game.players.some(player => player.id === playerId) && game.players.length === 2
+
     ).map(([gameId, game]) => {
       const isMyTurn = game.currentPlayer === game.players.find(p => p.id === playerId).symbol;
       return { gameId, isMyTurn };  // Now also returning whether it is the player's turn

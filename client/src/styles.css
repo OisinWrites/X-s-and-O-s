@@ -49,6 +49,16 @@
   font-family: "Gluten", cursive;
   overflow-y: hidden;
   overflow-x: hidden;
+  position: relative;
+  transform-origin: center center;
+}
+
+@media (orientation: landscape) {
+  .game-container {
+      transform: rotate(-90deg) translateX(-100%);
+      width: 100vh;
+      height: 100vw;
+  }
 }
 
 .logo {
