@@ -55,6 +55,10 @@ class Game extends Component {
   };
 
   componentDidMount() {
+    this.socket.on('connect', () => {
+      console.log('Socket reconnected. Verifying game state...');
+      this.requestGameState(); // Verify state upon reconnection
+    });
     let playerId = getCookie('playerId');
     let username = getCookie('username');
 
@@ -144,14 +148,22 @@ class Game extends Component {
     });
   };
 
+  requestGameState = () => {
+    this.socket.emit('requestGameState', { gameId: this.state.gameId });
+  }
+
   handleGameStateUpdate = (data) => {
     const gameEnded = data.winner !== null || data.board.every(cell => cell.symbol !== null);
-    this.setState({
+    if (this.state.gameId === data.gameId) { // Ensure the update is for the current game
+      this.setState({
         board: data.board,
         currentPlayer: data.currentPlayer,
         winner: data.winner,
-        results: data.results,
-    });
+        results: data.results
+      });
+    } else {
+      console.error('Received game state for a different game');
+    }
 
     if (gameEnded) {
       // Clear any existing timeout
@@ -252,6 +264,10 @@ class Game extends Component {
 
   startNewGame = () => {
     this.socket.emit('startNewGame', { gameId: this.state.gameId });
+  };
+
+  handleReadyForNewGame = () => {
+    this.socket.emit('playerReady', { gameId: this.state.gameId, playerId: this.playerId });
   };
 
   handleNewGameStarted = (data) => {
@@ -363,7 +379,8 @@ class Game extends Component {
       showNewGameButton, 
       showDeleteConfirmation,
       playerSymbol,
-      customNames
+      customNames,
+      currentPlayer
       } = this.state;
 
     const opponentSymbol = playerSymbol === 'X' ? 'O' : 'X';
@@ -416,15 +433,17 @@ class Game extends Component {
               />       
             </div>
 
-          {showNewGameButton && (
+          {isGameStarted && showNewGameButton && (
           <div>
-          <button className="new-game-button midnight-green-font" onClick={this.startNewGame}>
-            <FontAwesomeIcon className="new-game-icon" icon={faRotateRight} />
-            <div className="new-game-text">
-              <Image className="new-game-text-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713273871/inkpx-curved-text_1_bydkfb.png" width="300" crop="scale" />
-            </div>
-          </button>                 
+            <button className="new-game-button midnight-green-font" onClick={this.handleReadyForNewGame}>
+              <FontAwesomeIcon className="new-game-icon" icon={faRotateRight} />
+              <div className="new-game-text">
+                <Image className="new-game-text-image" cloudName="REACT_APP_CLOUDINARY_CLOUD_NAME" publicId="https://res.cloudinary.com/dwhennrjl/image/upload/v1713273871/inkpx-curved-text_1_bydkfb.png" width="300" crop="scale" />
+              </div>
+            </button>                 
+            <div>{currentPlayer === playerSymbol ? "Your Turn" : "Waiting for Opponent"}</div>
           </div>
+          
           )}
           </div>
         ) : (
