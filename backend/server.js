@@ -27,7 +27,8 @@ function createGame(playerId) {
     currentPlayer: 'X',
     winner: null,
     nextStarter: 'O',
-    results: { X: 0, O: 0, draws: 0 }
+    results: { X: 0, O: 0, draws: 0 },
+    readyForNewGame: [] 
   };
   return gameId;
 }
@@ -92,13 +93,18 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (data) => {
     const { gameId, playerId } = data;
     const game = games[gameId];
-
+  
     if (!game) {
       socket.emit('gameError', 'Game not found');
       return;
     }
-
+  
     const existingPlayer = game.players.find(p => p.id === playerId);
+    if (existingPlayer) {
+      socket.join(gameId);
+      emitGameState(gameId, existingPlayer.id);
+      return;
+    }
 
     if (existingPlayer) {
       socket.join(gameId);
@@ -122,7 +128,6 @@ io.on('connection', (socket) => {
 
       return;
     }
-
     if (game.players.length === 1) {
 
       game.players.push({id: playerId, symbol: 'O'});
@@ -144,6 +149,19 @@ io.on('connection', (socket) => {
       socket.emit('gameError', 'Game already full');
     }
   });
+
+  function emitGameState(gameId, playerId) {
+    const game = games[gameId];
+    if (game) {
+      const gameState = {
+        board: game.gameBoard,
+        currentPlayer: game.currentPlayer,
+        winner: game.winner,
+        results: game.results
+      };
+      io.to(socketMap.get(playerId)).emit('gameStateUpdate', gameState);
+    }
+  }
 
   function updatePlayerGamesList(players) {
     players.forEach(player => {
@@ -205,7 +223,7 @@ io.on('connection', (socket) => {
 
   socket.on('move', ({ gameId, index, playerId, symbol, imageId }) => {
     const game = games[gameId];
-    if (!game) {
+    if (!game || game.currentPlayer !== symbol || game.gameBoard[index].symbol !== null) {
       socket.emit('gameError', 'Invalid game ID');
       return;
     }
@@ -241,8 +259,30 @@ io.on('connection', (socket) => {
     } else {
       socket.emit('gameError', 'Not your turn');
     }
-  });
-  
+  });  
+
+  socket.on('playerReady', ({ gameId, playerId }) => {
+    const game = games[gameId];
+    if (game && !game.readyForNewGame.includes(playerId)) {
+      game.readyForNewGame.push(playerId);
+      if (game.readyForNewGame.length === 2) { // Check if both players are ready
+        // Reset the game to start a new round
+        game.gameBoard = Array(9).fill({symbol: null, imageId: null});
+        game.currentPlayer = game.nextStarter; // Alternate starting player
+        game.winner = null;
+        game.nextStarter = game.currentPlayer === 'X' ? 'O' : 'X';
+        game.readyForNewGame = []; // Reset readiness
+        
+        io.to(gameId).emit('newGameStarted', {
+          board: game.gameBoard,
+          currentPlayer: game.currentPlayer,
+          winner: game.winner,
+          results: game.results
+        });
+      }
+    }
+  });  
+
   socket.on('startNewGame', ({ gameId }) => {
     const game = games[gameId];
     if (!game) {
