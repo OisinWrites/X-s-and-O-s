@@ -93,22 +93,16 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (data) => {
     const { gameId, playerId } = data;
     const game = games[gameId];
-  
+
     if (!game) {
       socket.emit('gameError', 'Game not found');
       return;
     }
-  
+
     const existingPlayer = game.players.find(p => p.id === playerId);
-    if (existingPlayer) {
-      socket.join(gameId);
-      emitGameState(gameId, existingPlayer.id);
-      return;
-    }
 
     if (existingPlayer) {
       socket.join(gameId);
-
       const opponent = game.players.find(p => p.id !== playerId);
       const opponentId = opponent ? opponent.id : null;
 
@@ -118,37 +112,25 @@ io.on('connection', (socket) => {
         opponentId,
       });
 
-      const gameState = {
-        board: game.gameBoard,
-        currentPlayer: game.currentPlayer,
-        winner: game.winner,
-        results: game.results // Include results in gameState
-      };
-      socket.emit('gameStateUpdate', gameState);
-
+      emitGameState(gameId, playerId);
       return;
     }
-    if (game.players.length === 1) {
 
-      game.players.push({id: playerId, symbol: 'O'});
+    if (game.players.length === 1) {
+      game.players.push({ id: playerId, symbol: 'O' });
       socket.join(gameId);
 
       deleteExistingGames(gameId);
 
       io.to(gameId).emit('gameStart', { gameId, players: game.players.map(p => p.id) });
 
-      const gameState = {
-        board: game.gameBoard,
-        currentPlayer: game.currentPlayer,
-        winner: game.winner,
-        results: game.results // Include results in gameState
-      };
-      io.to(gameId).emit('gameStateUpdate', gameState);
+      emitGameState(gameId, playerId);
       updatePlayerGamesList(game.players);
     } else {
       socket.emit('gameError', 'Game already full');
     }
   });
+
 
   function emitGameState(gameId, playerId) {
     const game = games[gameId];

@@ -146,6 +146,7 @@ class Game extends Component {
       isGameStarted: true,
       opponentId: data.opponentId,
     });
+    this.requestGameState();
   };
 
   requestGameState = () => {
